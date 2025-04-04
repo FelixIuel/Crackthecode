@@ -8,10 +8,14 @@ body {
 
 
 .game-wrapper {
-position: absolute;
-left: 30%;
-top: 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: calc(100vh - 80px); /* adjust based on header */
+  padding-top: 40px;
 }
+
 
 .game-area {
   background: white;
@@ -51,7 +55,8 @@ h1 {
 .number-label {
   margin-top: 5px;
   font-size: 14px;
-  color: #333;
+  color: black; /* <-- THIS IS THE FIX */
+  height: 16px;
 }
 
 
@@ -141,8 +146,8 @@ input.correct {
   margin-top: 20px;
   text-align: center;
   font-size: 24px;
-  position: relative;
 }
+
 
 
 .heart {
@@ -161,11 +166,17 @@ input.correct {
 }
 
 .hint-character {
-  position: absolute;
-  bottom: -50px;
-  left: 50%;
-  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  animation: rotateHint 2s infinite ease-in-out alternate;
+  position: relative;
+  align-self: center;
 }
+
+
 
 @keyframes rotateHint {
   0% { transform: rotate(-10deg); }
@@ -175,18 +186,6 @@ input.correct {
 .hint-image {
   width: 40px;
   height: 40px;
-}
-
-.speech-bubble {
-  position: absolute;
-  bottom: 30px;
-  left: -10px;
-  background-color: white;
-  color: black;
-  padding: 5px 10px;
-  border-radius: 10px;
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-  font-size: 12px;
 }
 
 .success-message {
@@ -301,23 +300,6 @@ input.correct {
   z-index: 10;
 }
 
-
-
-
-.hint-character {
-  position: absolute;
-  bottom: -60px;
-  left: 50%;
-  transform: translateX(-50%);
-  cursor: pointer;
-  animation: rotateHint 2s infinite ease-in-out alternate;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  z-index: 1;
-}
-
-
 @keyframes rotateHint {
   0% { transform: translateX(-50%) rotate(-10deg); }
   100% { transform: translateX(-50%) rotate(10deg); }
@@ -330,24 +312,6 @@ input.correct {
   transform: translateX(-50%);
   font-size: 14px;
   font-weight: bold;
-}
-
-.speech-bubble {
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  transform: translate(12px, -50%);
-
-  color: black;
-  font-size: 16px;
-  font-weight: 500;
-
-  background: none;           
-  border: none;               
-  box-shadow: none;           
-
-  white-space: nowrap;
-  z-index: 10;
 }
 
 header {
@@ -375,3 +339,35 @@ nav a:hover {
   color: #f0f0f0;
 }
 
+.floating-box {
+  display: none;
+}
+
+@keyframes rotateHint {
+  0% { transform: rotate(-5deg); }
+  100% { transform: rotate(5deg); }
+}
+
+.hint-image {
+  width: 40px;
+  height: 40px;
+}
+
+/* Hint Text */
+.hint-text {
+  margin-top: 5px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* Yellow Speech Bubble */
+.speech-bubble {
+  margin-top: 10px;
+  background: yellow;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  white-space: nowrap;
+  text-align: center;
+}

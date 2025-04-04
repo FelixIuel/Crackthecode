@@ -29,7 +29,6 @@ def signup():
     data = request.json
     email = data.get("email")
     password = data.get("password")
-    print("Signup route hit!", data)
 
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
@@ -48,7 +47,6 @@ def login():
     data = request.json
     email = data.get("email")
     password = data.get("password")
-    print("Login route hit!", data)
 
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
@@ -133,21 +131,22 @@ def check_sentence_complete():
     return jsonify({ "solved": solved })
 
 @app.route('/submit-score', methods=['POST'])
+@jwt_required()
 def submit_score():
+    current_user = get_jwt_identity()
     data = request.json
-    name = data.get("name", "").strip()
     score = data.get("score")
 
-    if not name or score is None:
-        return jsonify({"error": "Missing name or score"}), 400
+    if score is None:
+        return jsonify({"error": "Missing score"}), 400
 
     mongo.db.scores.insert_one({
-        "name": name,
+        "email": current_user,
         "score": score,
         "timestamp": datetime.utcnow()
     })
 
-    return jsonify({"message": "Score submitted!"})
+    return jsonify({"message": "Score submitted!"}), 200
 
 @app.route('/get-highscores', methods=['GET'])
 def get_highscores():
@@ -155,7 +154,18 @@ def get_highscores():
     result = [{"name": s["name"], "score": s["score"]} for s in scores]
     return jsonify(result)
 
+# ================== Hints ===================
+@app.route('/get-bogus-hint', methods=['GET'])
+def get_bogus_hint():
+    hints = list(mongo.db.hints.find())
+    if not hints:
+        return jsonify({"text": "No hints found."}), 404
+    hint = random.choice(hints)
+    return jsonify(hint)
+
 # ================== RUN ===================
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+

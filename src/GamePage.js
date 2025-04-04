@@ -1,10 +1,10 @@
-import React from 'react';
+import React from "react";
+import LetterPuzzle from "./LetterPuzzle";
 
 function GamePage() {
   return (
-    <div>
-      <h1>Game Page</h1>
-      {/* Add game logic here */}
+    <div className="game-page">
+      <LetterPuzzle />
     </div>
   );
 }
