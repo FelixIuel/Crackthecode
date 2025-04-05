@@ -1,12 +1,28 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-function Header() {
+function Header({
+  onLoginClick,
+  onSignupClick,
+  showLoginModal,
+  setShowLoginModal,
+  showSignupModal,
+  setShowSignupModal
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);  // State for modal visibility
-  const [isSignup, setIsSignup] = useState(false);  // To toggle between Login and Signup
+
+  const isModalOpen = showLoginModal || showSignupModal;
+  const isSignup = showSignupModal;
+
+  // ✅ Check token on load and update user state
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token && token !== "null" && token !== "undefined" && token.trim() !== "") {
+      setUser("loggedin"); // Just use a flag; email isn't stored securely anyway
+    }
+  }, []);
 
   const handleLogin = async () => {
     try {
@@ -18,9 +34,9 @@ function Header() {
       const data = await response.json();
       if (data.access_token) {
         localStorage.setItem('token', data.access_token);
-        setUser(email); // Store logged-in user
+        setUser("loggedin");
         alert('Login successful!');
-        setIsModalOpen(false);  // Close the modal after login
+        setShowLoginModal(false);
       } else {
         alert('Login failed!');
       }
@@ -38,7 +54,7 @@ function Header() {
       });
       const data = await response.json();
       alert(data.message || 'Signup failed');
-      setIsModalOpen(false);  // Close the modal after sign up
+      setShowSignupModal(false);
     } catch (error) {
       console.error('Error signing up:', error);
     }
@@ -57,9 +73,14 @@ function Header() {
       color: 'white',
       display: 'flex',
       justifyContent: 'space-between',
-      alignItems: 'center'
+      alignItems: 'center',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 1000
     }}>
-      {/* Left - Logo Section */}
+      {/* Left - Logo */}
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <img src="/logo192.png" alt="Logo" style={{ width: '40px', height: '40px', marginRight: '10px' }} />
         <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
@@ -69,23 +90,19 @@ function Header() {
         </div>
       </div>
 
-      {/* Center - Navigation Links */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        flexGrow: 1
-      }}>
+      {/* Center - Links */}
+      <div style={{ display: 'flex', justifyContent: 'center', flexGrow: 1 }}>
         <Link to="/" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none' }}>Play</Link>
         <Link to="/explanation" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none' }}>How to Play</Link>
         <Link to="/scoreboard" style={{ color: 'white', textDecoration: 'none' }}>Scoreboard</Link>
       </div>
 
-      {/* Right - Login/Signup Buttons */}
+      {/* Right - Auth */}
       <div style={{ marginLeft: 'auto' }}>
         {!user ? (
           <div>
             <button
-              onClick={() => { setIsModalOpen(true); setIsSignup(false); }}
+              onClick={onLoginClick}
               style={{
                 padding: '0.5rem 1rem',
                 backgroundColor: '#007BFF',
@@ -98,7 +115,7 @@ function Header() {
               Login
             </button>
             <button
-              onClick={() => { setIsModalOpen(true); setIsSignup(true); }}
+              onClick={onSignupClick}
               style={{
                 padding: '0.5rem 1rem',
                 backgroundColor: '#28a745',
@@ -125,20 +142,20 @@ function Header() {
         )}
       </div>
 
-      {/* Modal Popup for Login/SignUp */}
+      {/* Modal */}
       {isModalOpen && (
         <div style={{
           position: 'fixed',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backgroundColor: 'rgba(0, 0, 0, 0.9)',
           padding: '2rem',
           borderRadius: '8px',
           display: 'flex',
           flexDirection: 'column',
           width: '300px',
-          zIndex: '1000'
+          zIndex: '2000'
         }}>
           <h2 style={{ color: 'white', textAlign: 'center' }}>{isSignup ? 'Sign Up' : 'Login'}</h2>
           <input
@@ -149,7 +166,10 @@ function Header() {
             style={{
               marginBottom: '1rem',
               padding: '0.5rem',
-              borderRadius: '4px'
+              borderRadius: '4px',
+              width: '100%',
+              display: 'block',
+              boxSizing: 'border-box',
             }}
           />
           <input
@@ -160,7 +180,10 @@ function Header() {
             style={{
               marginBottom: '1rem',
               padding: '0.5rem',
-              borderRadius: '4px'
+              borderRadius: '4px',
+              width: '100%',
+              display: 'block',
+              boxSizing: 'border-box',
             }}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -178,7 +201,10 @@ function Header() {
               {isSignup ? 'Sign Up' : 'Login'}
             </button>
             <button
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => {
+                setShowLoginModal(false);
+                setShowSignupModal(false);
+              }}
               style={{
                 padding: '0.5rem 1rem',
                 backgroundColor: '#dc3545',

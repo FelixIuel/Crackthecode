@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "./App.css";
 
-const LetterPuzzle = () => {
+const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
   const [sentence, setSentence] = useState("");
   const [category, setCategory] = useState("");
   const [hint, setHint] = useState("");
@@ -15,18 +15,24 @@ const LetterPuzzle = () => {
   const [hintText, setHintText] = useState("");
   const [score, setScore] = useState(0);
   const [usedSentences, setUsedSentences] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // 🔐 Strict token check
-  const rawToken = localStorage.getItem("token");
-  console.log("rawToken:", rawToken);
-  const token =
-    rawToken &&
-    rawToken !== "undefined" &&
-    rawToken !== "null" &&
-    rawToken.trim() !== ""
-      ? rawToken
-      : null;
-  const isLoggedIn = !!token;
+  const inputRefs = useRef([]);
+  const timeoutRefs = useRef({});
+  const tokenRef = useRef(null);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    const valid = storedToken && storedToken !== "undefined" && storedToken !== "null" && storedToken.trim() !== "";
+
+    if (valid) {
+      setIsLoggedIn(true);
+      tokenRef.current = storedToken;
+    } else {
+      setIsLoggedIn(false);
+      tokenRef.current = null;
+    }
+  }, []);
 
   const getUniquePuzzle = async () => {
     let attempts = 0;
@@ -74,6 +80,8 @@ const LetterPuzzle = () => {
         });
 
         setUserInput(initialInput);
+        inputRefs.current = [];
+        timeoutRefs.current = {};
       })
       .catch((err) => console.error("Failed to fetch puzzle", err));
   };
@@ -88,33 +96,54 @@ const LetterPuzzle = () => {
   const handleChange = (index, value) => {
     if (/^[a-zA-Z]?$/.test(value)) {
       const newInput = [...userInput];
-      newInput[index] = value.toLowerCase();
+      const lowercase = value.toLowerCase();
+      newInput[index] = lowercase;
       setUserInput(newInput);
 
-      if (value.toLowerCase() !== correctLetters[index].toLowerCase()) {
-        setLives((prev) => {
-          const updated = Math.max(prev - 1, 0);
-          if (updated === 0) setGameOver(true);
+      const correctLetter = correctLetters[index]?.toLowerCase();
+
+      if (lowercase === correctLetter) {
+        if (timeoutRefs.current[index]) {
+          clearTimeout(timeoutRefs.current[index]);
+          delete timeoutRefs.current[index];
+        }
+
+        const nextIndex = newInput.findIndex((val, i) => i > index && val === "");
+        if (nextIndex !== -1 && inputRefs.current[nextIndex]) {
+          inputRefs.current[nextIndex].focus();
+        }
+
+        const fullInput = newInput.join("").toLowerCase();
+        const correctAnswer = correctLetters.join("").toLowerCase();
+        if (fullInput === correctAnswer) {
+          setIsCorrect(true);
+          setScore((prev) => prev + 1);
+          setTimeout(fetchPuzzle, 2000);
+        }
+
+        return;
+      }
+
+      setLives((prev) => {
+        const updated = Math.max(prev - 1, 0);
+        if (updated === 0) setGameOver(true);
+        return updated;
+      });
+
+      if (timeoutRefs.current[index]) {
+        clearTimeout(timeoutRefs.current[index]);
+      }
+
+      timeoutRefs.current[index] = setTimeout(() => {
+        setUserInput((prevInput) => {
+          const updated = [...prevInput];
+          if (updated[index]?.toLowerCase() !== correctLetter) {
+            updated[index] = "";
+          }
           return updated;
         });
-
-        setTimeout(() => {
-          setUserInput((prevInput) => {
-            const updatedInput = [...prevInput];
-            updatedInput[index] = "";
-            return updatedInput;
-          });
-        }, 2000);
-      }
-
-      const fullInput = newInput.join("").toLowerCase();
-      const correctAnswer = correctLetters.join("").toLowerCase();
-
-      if (fullInput === correctAnswer) {
-        setIsCorrect(true);
-        setScore((prev) => prev + 1);
-        setTimeout(fetchPuzzle, 2000);
-      }
+        delete timeoutRefs.current[index];
+      }, 2000);
     }
   };
 
@@ -128,26 +157,6 @@ const LetterPuzzle = () => {
       })
       .catch((err) => {
         console.error("Failed to fetch bogus hint", err);
-      });
-  };
-
-  const submitScore = () => {
-    if (!token) return;
-    fetch("http://127.0.0.1:5000/submit-score", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ score })
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        alert(data.message || "Score submitted!");
-      })
-      .catch((err) => {
-        console.error("Failed to submit score", err);
-        alert("Something went wrong saving your score.");
       });
   };
 
@@ -177,6 +186,7 @@ const LetterPuzzle = () => {
                   return isLetter ? (
                     <div key={`${wordIndex}-${i}`} className="input-box">
                       <input
+                        ref={(el) => (inputRefs.current[currentLetterIndex] = el)}
                         type="text"
                         disabled={gameOver}
                         className={
@@ -213,10 +223,7 @@ const LetterPuzzle = () => {
                   ) : null;
                 })}
               </div>
-
-              {wordIndex < words.length - 1 && (
-                <div className="space-box">&nbsp;&nbsp;&nbsp;</div>
-              )}
+              {wordIndex < words.length - 1 && <div className="space-box">&nbsp;&nbsp;&nbsp;</div>}
             </React.Fragment>
           ))}
         </div>
@@ -227,13 +234,54 @@ const LetterPuzzle = () => {
           <div className="game-over-screen full-screen">
             <h2>Game Over!</h2>
             <p>Your score: {score}</p>
-
             {!isLoggedIn ? (
-              <p style={{ marginTop: "10px", color: "gray" }}>
-                Log in or sign up to save your score.
-              </p>
+              <div style={{ marginTop: "10px", color: "gray" }}>
+                Log in or sign up to save your score.<br />
+                <span
+                  style={{
+                    color: "#007bff",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    marginRight: "10px"
+                  }}
+                  onClick={onLoginClick}
+                >
+                  Login
+                </span>
+                <span
+                  style={{
+                    color: "#28a745",
+                    textDecoration: "underline",
+                    cursor: "pointer"
+                  }}
+                  onClick={onSignupClick}
+                >
+                  Sign Up
+                </span>
+              </div>
             ) : (
-              <button onClick={submitScore}>Submit Score</button>
+              <button
+                onClick={() => {
+                  fetch("http://127.0.0.1:5000/submit-score", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${tokenRef.current}`
+                    },
+                    body: JSON.stringify({ score })
+                  })
+                    .then((res) => res.json())
+                    .then((data) => {
+                      alert(data.message || "Score submitted!");
+                    })
+                    .catch((err) => {
+                      console.error("Failed to submit score", err);
+                      alert("Something went wrong saving your score.");
+                    });
+                }}
+              >
+                Submit Score
+              </button>
             )}
           </div>
         )}

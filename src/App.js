@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import GamePage from './GamePage';
 import ExplanationPage from './ExplanationPage';
@@ -6,15 +6,44 @@ import ScoreboardPage from './ScoreboardPage';
 import Header from './Header';
 
 function App() {
+  const [showLogin, setShowLogin] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+
   return (
     <Router>
       <div>
-        {/* Use the header in every page */}
-        <Header />
-        
-        {/* Set up the routes using Routes (not Switch) */}
+        {/* ✅ Pass modal state and handlers to Header */}
+        <Header
+          onLoginClick={() => {
+            setShowSignup(false);
+            setShowLogin(true);
+          }}
+          onSignupClick={() => {
+            setShowLogin(false);
+            setShowSignup(true);
+          }}
+          showLoginModal={showLogin}
+          setShowLoginModal={setShowLogin}
+          showSignupModal={showSignup}
+          setShowSignupModal={setShowSignup}
+        />
+
         <Routes>
-          <Route exact path="/" element={<GamePage />} />
+          <Route
+            path="/"
+            element={
+              <GamePage
+                onLoginClick={() => {
+                  setShowSignup(false);
+                  setShowLogin(true);
+                }}
+                onSignupClick={() => {
+                  setShowLogin(false);
+                  setShowSignup(true);
+                }}
+              />
+            }
+          />
           <Route path="/explanation" element={<ExplanationPage />} />
           <Route path="/scoreboard" element={<ScoreboardPage />} />
         </Routes>
