@@ -17,6 +17,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
   const [usedSentences, setUsedSentences] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  const correctCount = useRef(0);
   const inputRefs = useRef([]);
   const timeoutRefs = useRef({});
   const tokenRef = useRef(null);
@@ -64,7 +65,6 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
         setLetterMapping(normalizedMap);
 
         setRevealedLetters(data.revealedLetters || []);
-        setLives(10);
         setGameOver(false);
         setIsCorrect(false);
 
@@ -118,18 +118,27 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
         if (fullInput === correctAnswer) {
           setIsCorrect(true);
           setScore((prev) => prev + 1);
+          correctCount.current += 1;
+
+          // ✅ Add +1 life for every 3 sentences (max 10)
+          if (correctCount.current % 3 === 0) {
+            setLives((prev) => Math.min(10, prev + 1));
+          }
+
           setTimeout(fetchPuzzle, 2000);
         }
 
         return;
       }
 
+      // ❌ Incorrect letter
       setLives((prev) => {
         const updated = Math.max(prev - 1, 0);
         if (updated === 0) setGameOver(true);
         return updated;
       });
 
+      // Clear the letter after 1s delay if still wrong
       if (timeoutRefs.current[index]) {
         clearTimeout(timeoutRefs.current[index]);
       }
@@ -143,7 +152,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
           return updated;
         });
         delete timeoutRefs.current[index];
-      }, 2000);
+      }, 1000);
     }
   };
 
@@ -158,6 +167,16 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
       .catch((err) => {
         console.error("Failed to fetch bogus hint", err);
       });
+  };
+
+  const handlePlayAgain = () => {
+    setGameOver(false);
+    setUserInput([]);
+    setUsedSentences([]);
+    setScore(0);
+    correctCount.current = 0;
+    setLives(10);
+    fetchPuzzle();
   };
 
   let letterIndex = 0;
@@ -234,6 +253,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
           <div className="game-over-screen full-screen">
             <h2>Game Over!</h2>
             <p>Your score: {score}</p>
+
             {!isLoggedIn ? (
               <div style={{ marginTop: "10px", color: "gray" }}>
                 Log in or sign up to save your score.<br />
@@ -283,6 +303,13 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
                 Submit Score
               </button>
             )}
+
+            <button
+              onClick={handlePlayAgain}
+              style={{ marginTop: "15px", padding: "10px 20px", fontWeight: "bold" }}
+            >
+              Play Again
+            </button>
           </div>
         )}
       </div>

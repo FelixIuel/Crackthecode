@@ -3,15 +3,7 @@ import LetterPuzzle from "./LetterPuzzle";
 
 function GamePage({ onLoginClick, onSignupClick }) {
   const audioRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.volume = 0.5;
-      audio.play().catch(() => {});
-    }
-  }, []);
+  const [isPlaying, setIsPlaying] = useState(false); // Start muted
 
   const toggleMusic = () => {
     const audio = audioRef.current;
@@ -22,6 +14,7 @@ function GamePage({ onLoginClick, onSignupClick }) {
     } else {
       audio.play().catch(() => {});
     }
+
     setIsPlaying(!isPlaying);
   };
 
@@ -37,7 +30,7 @@ function GamePage({ onLoginClick, onSignupClick }) {
         position: "relative"
       }}
     >
-      {/* Music toggle */}
+      {/* 🎵 Music toggle */}
       <div
         onClick={toggleMusic}
         style={{
@@ -46,10 +39,18 @@ function GamePage({ onLoginClick, onSignupClick }) {
           right: "20px",
           zIndex: 1000,
           textAlign: "center",
-          cursor: "pointer",
+          cursor: "pointer"
         }}
       >
-        <div style={{ color: "white", fontSize: "14px", fontWeight: "bold" }}>
+        <div
+          style={{
+            color: "white",
+            fontSize: "14px",
+            fontWeight: "bold",
+            textShadow: "1px 1px 3px black",
+            marginBottom: "5px"
+          }}
+        >
           Turn music {isPlaying ? "off" : "on"}
         </div>
         <img
@@ -59,7 +60,8 @@ function GamePage({ onLoginClick, onSignupClick }) {
         />
       </div>
 
-      <audio ref={audioRef} loop autoPlay>
+      {/* 🎧 Audio */}
+      <audio ref={audioRef} loop>
         <source src="/game-theme.mp3" type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>

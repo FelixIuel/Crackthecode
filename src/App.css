@@ -11,10 +11,12 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   min-height: 100vh;
-  padding-top: 100px; /* 💡 leave space for header */
-  padding-bottom: 100px;
+  padding-top: 100px;
+  padding-bottom: 150px; /* leave room for floating head */
   box-sizing: border-box;
+  position: relative;
 }
 
 
@@ -28,15 +30,16 @@ body {
   max-width: 1200px;
   margin-top: 20px;
   box-sizing: border-box;
-  width: 95%;
+  width: auto;
 }
 
 
 
 .container {
-  max-width: 600px;
-  margin: 50px auto;
-  padding: 20px;
+  max-width: none;
+  width: auto;
+  margin: 0 auto;
+  padding: 0;
   background: none !important;
   box-shadow: none !important;
   border-radius: 8px;
