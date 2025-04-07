@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import logo from './assets/pictures/general/logo192.png'; // ✅ updated import
 
 function Header({
   onLoginClick,
@@ -12,17 +13,22 @@ function Header({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState(null);
+  const [message, setMessage] = useState("");
 
   const isModalOpen = showLoginModal || showSignupModal;
   const isSignup = showSignupModal;
 
-  // ✅ Check token on load and update user state
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token && token !== "null" && token !== "undefined" && token.trim() !== "") {
-      setUser("loggedin"); // Just use a flag; email isn't stored securely anyway
+      setUser("loggedin");
     }
   }, []);
+
+  const showMessage = (text) => {
+    setMessage(text);
+    setTimeout(() => setMessage(""), 3000);
+  };
 
   const handleLogin = async () => {
     try {
@@ -35,13 +41,14 @@ function Header({
       if (data.access_token) {
         localStorage.setItem('token', data.access_token);
         setUser("loggedin");
-        alert('Login successful!');
+        showMessage("Login successful!");
         setShowLoginModal(false);
       } else {
-        alert('Login failed!');
+        showMessage("Login failed!");
       }
     } catch (error) {
       console.error('Error logging in:', error);
+      showMessage("Something went wrong.");
     }
   };
 
@@ -53,94 +60,116 @@ function Header({
         body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
-      alert(data.message || 'Signup failed');
+      showMessage(data.message || "Signup failed");
       setShowSignupModal(false);
     } catch (error) {
       console.error('Error signing up:', error);
+      showMessage("Something went wrong.");
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     setUser(null);
-    alert('Logged out');
+    showMessage("Logged out");
   };
 
   return (
-    <header style={{
-      backgroundColor: '#1f1f1f',
-      padding: '1rem',
-      color: 'white',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 1000
-    }}>
-      {/* Left - Logo */}
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <img src="/logo192.png" alt="Logo" style={{ width: '40px', height: '40px', marginRight: '10px' }} />
-        <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-          <Link to="/" style={{ textDecoration: 'none', color: 'white' }}>
-            Crack The Code
-          </Link>
+    <>
+      {message && (
+        <div style={{
+          position: 'fixed',
+          top: '60px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#28a745',
+          color: 'white',
+          padding: '10px 20px',
+          borderRadius: '6px',
+          zIndex: 3000,
+          boxShadow: '0px 2px 10px rgba(0,0,0,0.3)',
+          fontWeight: 'bold',
+          textAlign: 'center'
+        }}>
+          {message}
         </div>
-      </div>
+      )}
 
-      {/* Center - Links */}
-      <div style={{ display: 'flex', justifyContent: 'center', flexGrow: 1 }}>
-        <Link to="/" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none' }}>Play</Link>
-        <Link to="/explanation" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none' }}>How to Play</Link>
-        <Link to="/scoreboard" style={{ color: 'white', textDecoration: 'none' }}>Scoreboard</Link>
-      </div>
-
-      {/* Right - Auth */}
-      <div style={{ marginLeft: 'auto' }}>
-        {!user ? (
-          <div>
-            <button
-              onClick={onLoginClick}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#007BFF',
-                color: 'white',
-                border: 'none',
-                cursor: 'pointer',
-                marginRight: '1rem'
-              }}
-            >
-              Login
-            </button>
-            <button
-              onClick={onSignupClick}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              Sign Up
-            </button>
+      <header style={{
+        backgroundColor: '#1f1f1f',
+        padding: '1rem',
+        color: 'white',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000
+      }}>
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <img src={logo} alt="Logo" style={{ width: '40px', height: '40px', marginRight: '10px' }} />
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+            <Link to="/" style={{ textDecoration: 'none', color: 'white' }}>
+              Crack The Code
+            </Link>
           </div>
-        ) : (
-          <button
-            onClick={handleLogout}
-            style={{
-              color: 'white',
-              backgroundColor: 'transparent',
-              border: '1px solid white',
-              padding: '0.5rem 1rem'
-            }}
-          >
-            Logout
-          </button>
-        )}
-      </div>
+        </div>
+
+        {/* Nav Links */}
+        <div style={{ display: 'flex', justifyContent: 'center', flexGrow: 1 }}>
+          <Link to="/" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none' }}>Play</Link>
+          <Link to="/explanation" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none' }}>How to Play</Link>
+          <Link to="/scoreboard" style={{ color: 'white', textDecoration: 'none' }}>Scoreboard</Link>
+        </div>
+
+        {/* Auth Buttons */}
+        <div style={{ marginLeft: 'auto' }}>
+          {!user ? (
+            <>
+              <button
+                onClick={onLoginClick}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#007BFF',
+                  color: 'white',
+                  border: 'none',
+                  cursor: 'pointer',
+                  marginRight: '1rem'
+                }}
+              >
+                Login
+              </button>
+              <button
+                onClick={onSignupClick}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                Sign Up
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleLogout}
+              style={{
+                color: 'white',
+                backgroundColor: 'transparent',
+                border: '1px solid white',
+                padding: '0.5rem 1rem'
+              }}
+            >
+              Logout
+            </button>
+          )}
+        </div>
+      </header>
 
       {/* Modal */}
       {isModalOpen && (
@@ -155,7 +184,7 @@ function Header({
           display: 'flex',
           flexDirection: 'column',
           width: '300px',
-          zIndex: '2000'
+          zIndex: 2000
         }}>
           <h2 style={{ color: 'white', textAlign: 'center' }}>{isSignup ? 'Sign Up' : 'Login'}</h2>
           <input
@@ -219,7 +248,7 @@ function Header({
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 }
 

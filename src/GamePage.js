@@ -1,5 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import LetterPuzzle from "./LetterPuzzle";
+
+// ✅ Corrected imports based on your folder structure
+import backgroundImg from "./assets/pictures/gamepage/GamePage-Background.png";
+import speakerOnIcon from "./assets/pictures/gamepage/speaker-on.png";
+import speakerOffIcon from "./assets/pictures/gamepage/speaker-off.png";
+import frameBottom from "./assets/pictures/general/frame-bottom.png";
+import gameTheme from "./assets/sounds/gamepage/game-theme.mp3";
 
 function GamePage({ onLoginClick, onSignupClick }) {
   const audioRef = useRef(null);
@@ -21,7 +28,7 @@ function GamePage({ onLoginClick, onSignupClick }) {
   return (
     <div
       style={{
-        backgroundImage: 'url("/GamePage-Background.png")',
+        backgroundImage: `url(${backgroundImg})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -54,7 +61,7 @@ function GamePage({ onLoginClick, onSignupClick }) {
           Turn music {isPlaying ? "off" : "on"}
         </div>
         <img
-          src={isPlaying ? "/speaker-on.png" : "/speaker-off.png"}
+          src={isPlaying ? speakerOnIcon : speakerOffIcon}
           alt="Toggle Music"
           style={{ width: "32px", height: "32px" }}
         />
@@ -62,7 +69,7 @@ function GamePage({ onLoginClick, onSignupClick }) {
 
       {/* 🎧 Audio */}
       <audio ref={audioRef} loop>
-        <source src="/game-theme.mp3" type="audio/mpeg" />
+        <source src={gameTheme} type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
 
@@ -74,7 +81,7 @@ function GamePage({ onLoginClick, onSignupClick }) {
       </div>
 
       <img
-        src="/frame-bottom.png"
+        src={frameBottom}
         alt="Bottom Frame"
         className="frame-bottom"
       />

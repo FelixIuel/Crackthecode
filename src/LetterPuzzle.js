@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./App.css";
+import hintCharacter from "./assets/pictures/gamepage/hint-character.png";
 
 const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
   const [sentence, setSentence] = useState("");
@@ -120,7 +121,6 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
           setScore((prev) => prev + 1);
           correctCount.current += 1;
 
-          // ✅ Add +1 life for every 3 sentences (max 10)
           if (correctCount.current % 3 === 0) {
             setLives((prev) => Math.min(10, prev + 1));
           }
@@ -131,14 +131,12 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
         return;
       }
 
-      // ❌ Incorrect letter
       setLives((prev) => {
         const updated = Math.max(prev - 1, 0);
         if (updated === 0) setGameOver(true);
         return updated;
       });
 
-      // Clear the letter after 1s delay if still wrong
       if (timeoutRefs.current[index]) {
         clearTimeout(timeoutRefs.current[index]);
       }
@@ -321,7 +319,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
       </div>
 
       <div className="hint-character" onClick={showBogusHint}>
-        <img src="/hint-character.png" alt="Hint Character" className="hint-image" />
+        <img src={hintCharacter} alt="Hint Character" className="hint-image" />
         <div className="hint-text">Ask me</div>
         {showHint && <div className="speech-bubble">{hintText}</div>}
       </div>
