@@ -1,7 +1,6 @@
 import React, { useRef, useState } from "react";
 import LetterPuzzle from "./LetterPuzzle";
 
-// ✅ Corrected imports based on your folder structure
 import backgroundImg from "./assets/pictures/gamepage/GamePage-Background.png";
 import speakerOnIcon from "./assets/pictures/gamepage/speaker-on.png";
 import speakerOffIcon from "./assets/pictures/gamepage/speaker-off.png";
@@ -10,7 +9,7 @@ import gameTheme from "./assets/sounds/gamepage/game-theme.mp3";
 
 function GamePage({ onLoginClick, onSignupClick }) {
   const audioRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false); // Start muted
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const toggleMusic = () => {
     const audio = audioRef.current;
@@ -37,7 +36,7 @@ function GamePage({ onLoginClick, onSignupClick }) {
         position: "relative"
       }}
     >
-      {/* 🎵 Music toggle */}
+      {/* Music toggle */}
       <div
         onClick={toggleMusic}
         style={{
@@ -67,7 +66,7 @@ function GamePage({ onLoginClick, onSignupClick }) {
         />
       </div>
 
-      {/* 🎧 Audio */}
+      {/* Audio */}
       <audio ref={audioRef} loop>
         <source src={gameTheme} type="audio/mpeg" />
         Your browser does not support the audio element.

@@ -1,7 +1,9 @@
 from flask import Flask, jsonify, request
 from flask_pymongo import PyMongo
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required, get_jwt_identity
+)
 from flask_cors import CORS
 from datetime import datetime
 import random
@@ -9,11 +11,11 @@ import random
 app = Flask(__name__)
 CORS(app)
 
-# MongoDB config
+# MongoDB Config
 app.config["MONGO_URI"] = "mongodb://localhost:27017/crackthecode"
 mongo = PyMongo(app)
 
-# Auth setup
+# Auth & JWT Setup
 app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
@@ -22,7 +24,7 @@ bcrypt = Bcrypt(app)
 def home():
     return "Flask backend is live ✅"
 
-# ================== AUTH ===================
+# ========== AUTH ==========
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -64,22 +66,7 @@ def profile():
     current_user = get_jwt_identity()
     return jsonify({"success": True, "user": current_user}), 200
 
-# ================== GAME ===================
-
-@app.route('/get-puzzle')
-def get_puzzle():
-    sentences = list(mongo.db.sentences.find())
-    if not sentences:
-        return jsonify({"error": "No puzzles found"}), 404
-
-    puzzle = random.choice(sentences)
-    return jsonify({
-        "category": puzzle["category"],
-        "hint": puzzle["hint"],
-        "sentence": puzzle["sentence"],
-        "revealedLetters": puzzle["revealedLetters"],
-        "letterMap": puzzle["letterMap"]
-    })
+# ========== SCORES ==========
 
 @app.route('/submit-score', methods=['POST'])
 @jwt_required()
@@ -101,7 +88,7 @@ def submit_score():
 
 @app.route('/get-highscores', methods=['GET'])
 def get_highscores():
-    scores = list(mongo.db.scores.find().sort("score", -1).limit(10))
+    scores = list(mongo.db.scores.find().sort("score", -1).limit(250))
     result = []
     for s in scores:
         result.append({
@@ -111,7 +98,35 @@ def get_highscores():
         })
     return jsonify({"success": True, "highscores": result}), 200
 
-# ================== HINTS ===================
+@app.route('/my-scores', methods=['GET'])
+@jwt_required()
+def get_my_scores():
+    current_user = get_jwt_identity()
+    scores = list(mongo.db.scores.find({"email": current_user}).sort("timestamp", -1))
+    result = []
+    for s in scores:
+        result.append({
+            "score": s.get("score", 0),
+            "timestamp": s.get("timestamp", "")
+        })
+    return jsonify({"success": True, "scores": result}), 200
+
+# ========== PUZZLE & HINTS ==========
+
+@app.route('/get-puzzle')
+def get_puzzle():
+    sentences = list(mongo.db.sentences.find())
+    if not sentences:
+        return jsonify({"error": "No puzzles found"}), 404
+
+    puzzle = random.choice(sentences)
+    return jsonify({
+        "category": puzzle["category"],
+        "hint": puzzle["hint"],
+        "sentence": puzzle["sentence"],
+        "revealedLetters": puzzle["revealedLetters"],
+        "letterMap": puzzle["letterMap"]
+    })
 
 @app.route('/get-bogus-hint', methods=['GET'])
 def get_bogus_hint():
@@ -121,9 +136,7 @@ def get_bogus_hint():
     hint = random.choice(hints)
     return jsonify(hint)
 
-# ================== RUN ===================
+# ========== START APP ==========
 
 if __name__ == '__main__':
-    # Recommended: Run this in Mongo shell ONCE to enforce email uniqueness
-    # db.users.createIndex({ email: 1 }, { unique: true })
     app.run(debug=True)

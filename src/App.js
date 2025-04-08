@@ -12,7 +12,6 @@ function App() {
   return (
     <Router>
       <div>
-        {/* ✅ Pass modal state and handlers to Header */}
         <Header
           onLoginClick={() => {
             setShowSignup(false);

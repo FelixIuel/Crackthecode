@@ -1,28 +1,38 @@
 .scoreboard-page-wrapper {
-  overflow-x: hidden;
-  overflow-y: auto;
-  min-height: 100vh;
   background-color: black;
-}
-
-.scoreboard-background {
-  background-repeat: no-repeat;
-  background-size: 100% auto; /* Full width, keep image ratio */
-  background-position: top center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 120px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
 }
 
-.scoreboard-container {
+.scoreboard-background-wrapper {
+  width: 100%;
   display: flex;
-  justify-content: space-around;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.scoreboard-background-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  z-index: 0;
+}
+
+.scoreboard-overlay {
+  position: absolute;
+  top: 120px;
   width: 100%;
   max-width: 1200px;
-  padding: 40px;
-  box-sizing: border-box;
-  position: relative;
+  display: flex;
+  justify-content: space-between;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .score-column {
@@ -30,21 +40,26 @@
   font-size: 16px;
   color: black;
   background-color: rgba(255, 255, 255, 0.2);
-  padding: 20px;
+  padding: 20px 0 60px;
   border: 1px dashed rgba(0, 0, 0, 0.3);
-  max-height: 460px;
-  overflow: hidden;
-  position: relative;
+  height: 1390px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  pointer-events: auto;
 }
 
 .score-column.left {
-  transform: translate(45px, 40px);
-  width: 41%;
+  transform: translate(-150px, 40px);
+  width: 730px;
+  left: 0;
 }
 
 .score-column.right {
-  transform: translate(-43px, 40px);
-  width: 42%;
+  transform: translate(135px, 40px);
+  width: 730px;
+  right: 0;
 }
 
 .score-header {
@@ -53,40 +68,69 @@
   margin-bottom: 10px;
 }
 
-.header-icon {
-  width: 50px;
-  height: auto;
+.score-entry-wrapper {
+  margin-bottom: 6px;
 }
 
 .score-entry {
-  padding: 6px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
   border-bottom: 1px dashed #999;
+}
+
+.entry-toggle-icon {
+  height: 20px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.score-details {
+  font-size: 14px;
+  padding: 2px 20px;
+  color: #333;
+  font-style: italic;
 }
 
 .arrows {
   position: absolute;
-  bottom: 10px;
+  bottom: 20px;
   width: 100%;
   display: flex;
-  justify-content: space-between;
-  padding: 0 10px;
+  justify-content: center;
+  gap: 40px;
 }
 
 .arrow-button {
-  font-size: 18px;
+  height: 30px;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.4);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: bold;
-  user-select: none;
 }
 
-.frame-bottom.scoreboard-frame {
-  width: 100%;
-  height: auto;
-  display: block;
-  position: relative;
-  margin-top: -10px;
-  z-index: 0;
+.login-prompt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  margin-bottom: auto;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.login-prompt img {
+  width: 180px;
+  margin-bottom: 20px;
+}
+
+.login-prompt p {
+  color: black;
+  font-size: 16px;
+}
+
+.login-prompt a {
+  color: #000;
+  text-decoration: underline;
+  cursor: pointer;
 }
