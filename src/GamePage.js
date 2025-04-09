@@ -7,7 +7,7 @@ import speakerOffIcon from "./assets/pictures/gamepage/speaker-off.png";
 import frameBottom from "./assets/pictures/general/frame-bottom.png";
 import gameTheme from "./assets/sounds/gamepage/game-theme.mp3";
 
-function GamePage({ onLoginClick, onSignupClick }) {
+function GamePage({ onLoginClick, onSignupClick, isLoggedIn }) {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -76,6 +76,7 @@ function GamePage({ onLoginClick, onSignupClick }) {
         <LetterPuzzle
           onLoginClick={onLoginClick}
           onSignupClick={onSignupClick}
+          isLoggedIn={isLoggedIn} // ✅ Pass the prop!
         />
       </div>
 

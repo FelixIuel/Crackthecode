@@ -17,7 +17,6 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
   const [hintText, setHintText] = useState("");
   const [score, setScore] = useState(0);
   const [usedSentences, setUsedSentences] = useState([]);
-  const [isLoggedInLocal, setIsLoggedInLocal] = useState(false);
   const [gameSessionId] = useState(uuidv4());
 
   const correctCount = useRef(0);
@@ -25,25 +24,14 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
   const timeoutRefs = useRef({});
   const tokenRef = useRef(null);
 
-  // Check login on mount
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    const valid = storedToken && storedToken !== "undefined" && storedToken !== "null" && storedToken.trim() !== "";
-    if (valid) {
-      setIsLoggedInLocal(true);
-      tokenRef.current = storedToken;
-    } else {
-      setIsLoggedInLocal(false);
-      tokenRef.current = null;
-    }
-  }, []);
-
-  // Watch for external login updates
   useEffect(() => {
     if (isLoggedIn) {
       const token = localStorage.getItem("token");
-      tokenRef.current = token;
-      setIsLoggedInLocal(true);
+      if (token && token !== "undefined" && token !== "null" && token.trim() !== "") {
+        tokenRef.current = token;
+      }
+    } else {
+      tokenRef.current = null; // Clear on logout
     }
   }, [isLoggedIn]);
 
@@ -265,7 +253,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
             <h2>Game Over!</h2>
             <p>Your score: {score}</p>
 
-            {!isLoggedInLocal ? (
+            {!isLoggedIn ? (
               <div style={{ marginTop: "10px", color: "gray" }}>
                 Log in or sign up to save your score.<br />
                 <span
@@ -324,7 +312,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
               style={{
                 marginTop: "15px",
                 padding: "10px 20px",
-                fontWeight: "bold",
+                fontWeight: "bold"
               }}
             >
               Play Again
