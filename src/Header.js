@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import logo from './assets/pictures/general/logo192.png'; // ✅ updated import
+import logo from './assets/pictures/general/logo192.png';
 
 function Header({
   onLoginClick,
@@ -8,11 +8,12 @@ function Header({
   showLoginModal,
   setShowLoginModal,
   showSignupModal,
-  setShowSignupModal
+  setShowSignupModal,
+  isLoggedIn,
+  setIsLoggedIn
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [user, setUser] = useState(null);
   const [message, setMessage] = useState("");
 
   const isModalOpen = showLoginModal || showSignupModal;
@@ -21,9 +22,9 @@ function Header({
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token && token !== "null" && token !== "undefined" && token.trim() !== "") {
-      setUser("loggedin");
+      setIsLoggedIn(true);
     }
-  }, []);
+  }, [setIsLoggedIn]);
 
   const showMessage = (text) => {
     setMessage(text);
@@ -40,7 +41,7 @@ function Header({
       const data = await response.json();
       if (data.access_token) {
         localStorage.setItem('token', data.access_token);
-        setUser("loggedin");
+        setIsLoggedIn(true);
         showMessage("Login successful!");
         setShowLoginModal(false);
       } else {
@@ -61,6 +62,7 @@ function Header({
       });
       const data = await response.json();
       showMessage(data.message || "Signup failed");
+      setIsLoggedIn(true); // optional but helpful if auto-login after signup
       setShowSignupModal(false);
     } catch (error) {
       console.error('Error signing up:', error);
@@ -70,7 +72,7 @@ function Header({
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    setUser(null);
+    setIsLoggedIn(false);
     showMessage("Logged out");
   };
 
@@ -127,7 +129,7 @@ function Header({
 
         {/* Auth Buttons */}
         <div style={{ marginLeft: 'auto' }}>
-          {!user ? (
+          {!isLoggedIn ? (
             <>
               <button
                 onClick={onLoginClick}

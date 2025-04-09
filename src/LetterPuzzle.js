@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./App.css";
 import hintCharacter from "./assets/pictures/gamepage/hint-character.png";
+import { v4 as uuidv4 } from "uuid";
 
-const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
+const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
   const [sentence, setSentence] = useState("");
   const [category, setCategory] = useState("");
   const [hint, setHint] = useState("");
@@ -16,25 +17,35 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
   const [hintText, setHintText] = useState("");
   const [score, setScore] = useState(0);
   const [usedSentences, setUsedSentences] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedInLocal, setIsLoggedInLocal] = useState(false);
+  const [gameSessionId] = useState(uuidv4());
 
   const correctCount = useRef(0);
   const inputRefs = useRef([]);
   const timeoutRefs = useRef({});
   const tokenRef = useRef(null);
 
+  // Check login on mount
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     const valid = storedToken && storedToken !== "undefined" && storedToken !== "null" && storedToken.trim() !== "";
-
     if (valid) {
-      setIsLoggedIn(true);
+      setIsLoggedInLocal(true);
       tokenRef.current = storedToken;
     } else {
-      setIsLoggedIn(false);
+      setIsLoggedInLocal(false);
       tokenRef.current = null;
     }
   }, []);
+
+  // Watch for external login updates
+  useEffect(() => {
+    if (isLoggedIn) {
+      const token = localStorage.getItem("token");
+      tokenRef.current = token;
+      setIsLoggedInLocal(true);
+    }
+  }, [isLoggedIn]);
 
   const getUniquePuzzle = async () => {
     let attempts = 0;
@@ -240,7 +251,9 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
                   ) : null;
                 })}
               </div>
-              {wordIndex < words.length - 1 && <div className="space-box">&nbsp;&nbsp;&nbsp;</div>}
+              {wordIndex < words.length - 1 && (
+                <div className="space-box">&nbsp;&nbsp;&nbsp;</div>
+              )}
             </React.Fragment>
           ))}
         </div>
@@ -252,7 +265,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
             <h2>Game Over!</h2>
             <p>Your score: {score}</p>
 
-            {!isLoggedIn ? (
+            {!isLoggedInLocal ? (
               <div style={{ marginTop: "10px", color: "gray" }}>
                 Log in or sign up to save your score.<br />
                 <span
@@ -286,7 +299,11 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
                       "Content-Type": "application/json",
                       Authorization: `Bearer ${tokenRef.current}`
                     },
-                    body: JSON.stringify({ score })
+                    body: JSON.stringify({
+                      score,
+                      timestamp: new Date().toISOString(),
+                      sessionId: gameSessionId,
+                    }),
                   })
                     .then((res) => res.json())
                     .then((data) => {
@@ -304,7 +321,11 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
 
             <button
               onClick={handlePlayAgain}
-              style={{ marginTop: "15px", padding: "10px 20px", fontWeight: "bold" }}
+              style={{
+                marginTop: "15px",
+                padding: "10px 20px",
+                fontWeight: "bold",
+              }}
             >
               Play Again
             </button>
@@ -314,12 +335,18 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick }) => {
 
       <div className="life-bar centered">
         {Array.from({ length: 10 }).map((_, i) => (
-          <span key={i} className={`heart ${i < lives ? "full" : "empty"}`}>&#10084;</span>
+          <span key={i} className={`heart ${i < lives ? "full" : "empty"}`}>
+            &#10084;
+          </span>
         ))}
       </div>
 
       <div className="hint-character" onClick={showBogusHint}>
-        <img src={hintCharacter} alt="Hint Character" className="hint-image" />
+        <img
+          src={hintCharacter}
+          alt="Hint Character"
+          className="hint-image"
+        />
         <div className="hint-text">Ask me</div>
         {showHint && <div className="speech-bubble">{hintText}</div>}
       </div>

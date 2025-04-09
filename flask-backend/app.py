@@ -74,35 +74,60 @@ def submit_score():
     current_user = get_jwt_identity()
     data = request.json
     score = data.get("score")
+    timestamp = data.get("timestamp")
+    session_id = data.get("sessionId")
 
-    if score is None:
-        return jsonify({"success": False, "error": "Missing score"}), 400
+    if score is None or session_id is None:
+        return jsonify({"success": False, "error": "Missing score or sessionId"}), 400
+
+    # Prevent duplicate submission
+    existing = mongo.db.scores.find_one({
+        "email": current_user,
+        "sessionId": session_id
+    })
+
+    if existing:
+        return jsonify({"success": False, "error": "Score already submitted for this session"}), 409
 
     mongo.db.scores.insert_one({
         "email": current_user,
         "score": score,
-        "timestamp": datetime.utcnow()
+        "timestamp": timestamp or datetime.utcnow().isoformat(),
+        "sessionId": session_id
     })
 
     return jsonify({"success": True, "message": "Score submitted!"}), 200
 
 @app.route('/get-highscores', methods=['GET'])
 def get_highscores():
-    scores = list(mongo.db.scores.find().sort("score", -1).limit(250))
-    result = []
-    for s in scores:
-        result.append({
-            "email": s.get("email", "Unknown"),
-            "score": s.get("score", 0),
+    # Use aggregation to get each user's best score
+    pipeline = [
+        {"$group": {
+            "_id": "$email",
+            "best_score": {"$max": "$score"},
+            "timestamp": {"$first": "$timestamp"}
+        }},
+        {"$sort": {"best_score": -1}},
+        {"$limit": 250}
+    ]
+
+    scores = list(mongo.db.scores.aggregate(pipeline))
+    result = [
+        {
+            "email": s["_id"],
+            "score": s["best_score"],
             "timestamp": s.get("timestamp", "")
-        })
+        }
+        for s in scores
+    ]
     return jsonify({"success": True, "highscores": result}), 200
+
 
 @app.route('/my-scores', methods=['GET'])
 @jwt_required()
 def get_my_scores():
     current_user = get_jwt_identity()
-    scores = list(mongo.db.scores.find({"email": current_user}).sort("timestamp", -1))
+    scores = list(mongo.db.scores.find({"email": current_user}).sort("score", -1))
     result = []
     for s in scores:
         result.append({

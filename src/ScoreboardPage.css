@@ -39,9 +39,9 @@
   font-family: monospace;
   font-size: 16px;
   color: black;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: transparent;
   padding: 20px 0 60px;
-  border: 1px dashed rgba(0, 0, 0, 0.3);
+  border: none;
   height: 1390px;
   box-sizing: border-box;
   display: flex;
@@ -131,6 +131,54 @@
 
 .login-prompt a {
   color: #000;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.score-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.expand-icon {
+  width: 18px;
+  height: auto;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.score-details {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #444;
+  font-style: italic;
+}
+
+/* Guest mode */
+.guest-prompt-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.guest-image {
+  width: 200px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+.guest-text {
+  font-family: monospace;
+  font-size: 16px;
+  text-align: center;
+  color: black;
+}
+
+.guest-text span {
+  color: blue;
   text-decoration: underline;
   cursor: pointer;
 }

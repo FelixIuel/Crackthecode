@@ -1,161 +1,151 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./ScoreboardPage.css";
-
 import backgroundImg from "./assets/pictures/scoreboard/scorebook-background.png";
 import frameBottom from "./assets/pictures/general/frame-bottom.png";
-import loginImage from "./assets/pictures/scoreboard/question-man.png";
-
+import questionImage from "./assets/pictures/scoreboard/guest-question.png";
+import arrowDown from "./assets/pictures/scoreboard/arrow-down.png";
+import arrowUp from "./assets/pictures/scoreboard/arrow-up.png";
+import arrowLeft from "./assets/pictures/scoreboard/arrow-left.png";
+import arrowRight from "./assets/pictures/scoreboard/arrow-right.png";
 import pageTurnSound from "./assets/sounds/scoreboard/page-turn.mp3";
 
-const scoresPerPage = 35;
-
-const ScoreboardPage = ({
-  onLoginClick,
-  onSignupClick,
-  showLoginModal,
-  showSignupModal,
-  setShowLoginModal,
-  setShowSignupModal
-}) => {
-  const [topScores, setTopScores] = useState([]);
+const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
   const [myScores, setMyScores] = useState([]);
-  const [topPage, setTopPage] = useState(0);
+  const [topScores, setTopScores] = useState([]);
+  const [expandedIndex, setExpandedIndex] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [myPage, setMyPage] = useState(0);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [topPage, setTopPage] = useState(0);
+  const scoresPerPage = 35;
   const audio = new Audio(pageTurnSound);
 
   useEffect(() => {
-    fetch("http://localhost:5000/get-highscores")
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setTopScores(data.highscores);
-        }
+    const token = localStorage.getItem("token");
+    setIsAuthenticated(!!token);
+
+    fetch("http://127.0.0.1:5000/get-highscores")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setTopScores(data.highscores);
       });
 
-    const token = localStorage.getItem("token");
-    if (token && token !== "null" && token !== "undefined") {
-      setIsLoggedIn(true);
-      fetch("http://localhost:5000/my-scores", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    if (token) {
+      fetch("http://127.0.0.1:5000/my-scores", {
+        headers: { Authorization: `Bearer ${token}` },
       })
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.success) {
-            setMyScores(data.scores);
+            const sorted = [...data.scores].sort((a, b) => b.score - a.score);
+            setMyScores(sorted);
           }
-        })
-        .catch(err => console.error("Failed to fetch user scores", err));
+        });
     }
-  }, []);
+  }, [isLoggedIn]);
 
   const handlePageChange = (type, direction) => {
     audio.play();
     setTimeout(() => {
-      if (type === "top") {
-        setTopPage(prev => Math.max(0, prev + direction));
-      } else {
-        setMyPage(prev => Math.max(0, prev + direction));
+      if (type === "my") {
+        setMyPage((prev) => Math.max(0, prev + direction));
+      } else if (type === "top") {
+        setTopPage((prev) => Math.max(0, prev + direction));
       }
     }, 1000);
   };
 
-  const paginated = (list, page) =>
-    list.slice(page * scoresPerPage, (page + 1) * scoresPerPage);
+  const toggleExpand = (index) => {
+    setExpandedIndex((prev) => (prev === index ? null : index));
+  };
+
+  const myPaginated = myScores.slice(myPage * scoresPerPage, (myPage + 1) * scoresPerPage);
+  const topPaginated = topScores.slice(topPage * scoresPerPage, (topPage + 1) * scoresPerPage);
 
   return (
     <div className="scoreboard-page-wrapper">
       <div className="scoreboard-background-wrapper">
-        <img
-          src={backgroundImg}
-          alt="Notebook"
-          className="scoreboard-background-image"
-        />
-
+        <img src={backgroundImg} alt="Notebook" className="scoreboard-background-image" />
         <div className="scoreboard-overlay">
-          {/* My Scores or login prompt */}
           <div className="score-column left">
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <>
-                <div className="score-header">
-                  <h1>My Scores</h1>
-                </div>
-                {paginated(myScores, myPage).map((entry, i) => (
-                  <div key={i} className="score-entry">
-                    #{myPage * scoresPerPage + i + 1} — {entry.score} points
+                <div className="score-header"><h1>My Scores</h1></div>
+                {myPaginated.map((entry, index) => (
+                  <div key={index} className="score-entry">
+                    <div className="score-line">
+                      #{myPage * scoresPerPage + index + 1} — {entry.score} points
+                      <img
+                        src={expandedIndex === index ? arrowUp : arrowDown}
+                        alt="toggle"
+                        className="expand-icon"
+                        onClick={() => toggleExpand(index)}
+                      />
+                    </div>
+                    {expandedIndex === index && (
+                      <div className="score-details">
+                        Played: {new Date(entry.timestamp).toLocaleString()}
+                      </div>
+                    )}
                   </div>
                 ))}
                 <div className="arrows">
                   {myPage > 0 && (
                     <img
-                      src="/arrow-left.png"
-                      alt="Back"
+                      src={arrowLeft}
                       className="arrow-button"
                       onClick={() => handlePageChange("my", -1)}
+                      alt="Previous"
                     />
                   )}
                   {myScores.length > (myPage + 1) * scoresPerPage && (
                     <img
-                      src="/arrow-right.png"
-                      alt="Next"
+                      src={arrowRight}
                       className="arrow-button"
                       onClick={() => handlePageChange("my", 1)}
+                      alt="Next"
                     />
                   )}
                 </div>
               </>
             ) : (
-              <div className="login-placeholder">
-                <img
-                  src={loginImage}
-                  alt="Login Placeholder"
-                  className="login-image"
-                />
-                <p className="login-prompt-text">
-                  Please <span onClick={onLoginClick} className="link">log in</span> or <span onClick={onSignupClick} className="link">sign up</span> to view your scores
-                </p>
+              <div className="guest-prompt-wrapper">
+                <img src={questionImage} alt="Guest" className="guest-image" />
+                <div className="guest-text">
+                  Please <span onClick={onLoginClick}>log in</span> or{" "}
+                  <span onClick={onSignupClick}>sign up</span> to view your scores
+                </div>
               </div>
             )}
           </div>
 
-          {/* Top Scores */}
           <div className="score-column right">
-            <div className="score-header">
-              <h1>Top Players</h1>
-            </div>
-            {paginated(topScores, topPage).map((entry, i) => (
-              <div key={i} className="score-entry">
-                #{topPage * scoresPerPage + i + 1} — {entry.email || "Unknown"}: {entry.score} points
+            <div className="score-header"><h1>Top Players</h1></div>
+            {topPaginated.map((entry, index) => (
+              <div key={index} className="score-entry">
+                #{topPage * scoresPerPage + index + 1} — {entry.email || "Unknown"}: {entry.score} points
               </div>
             ))}
             <div className="arrows">
               {topPage > 0 && (
                 <img
-                  src="/arrow-left.png"
-                  alt="Back"
+                  src={arrowLeft}
                   className="arrow-button"
                   onClick={() => handlePageChange("top", -1)}
+                  alt="Previous"
                 />
               )}
               {topScores.length > (topPage + 1) * scoresPerPage && (
                 <img
-                  src="/arrow-right.png"
-                  alt="Next"
+                  src={arrowRight}
                   className="arrow-button"
                   onClick={() => handlePageChange("top", 1)}
+                  alt="Next"
                 />
               )}
             </div>
           </div>
         </div>
-
-        <img
-          src={frameBottom}
-          alt="Frame Bottom"
-          className="frame-bottom scoreboard-frame"
-        />
+        <img src={frameBottom} alt="Frame Bottom" className="frame-bottom scoreboard-frame" />
       </div>
     </div>
   );
