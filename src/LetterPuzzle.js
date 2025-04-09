@@ -17,6 +17,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
   const [hintText, setHintText] = useState("");
   const [score, setScore] = useState(0);
   const [usedSentences, setUsedSentences] = useState([]);
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const [gameSessionId] = useState(uuidv4());
 
   const correctCount = useRef(0);
@@ -31,7 +32,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
         tokenRef.current = token;
       }
     } else {
-      tokenRef.current = null; // Clear on logout
+      tokenRef.current = null;
     }
   }, [isLoggedIn]);
 
@@ -173,6 +174,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
     setScore(0);
     correctCount.current = 0;
     setLives(10);
+    setScoreSubmitted(false);
     fetchPuzzle();
   };
 
@@ -180,6 +182,23 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
 
   return (
     <div className="game-wrapper">
+      {scoreSubmitted && (
+        <div style={{
+          position: "fixed",
+          top: "80px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          backgroundColor: "#28a745",
+          color: "white",
+          padding: "10px 20px",
+          borderRadius: "6px",
+          fontWeight: "bold",
+          zIndex: 2000
+        }}>
+          Score received by the Detective!
+        </div>
+      )}
+
       <div className="game-area">
         <div className="game-header">
           <h2 className="category">{category}</h2>
@@ -295,11 +314,11 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
                   })
                     .then((res) => res.json())
                     .then((data) => {
-                      alert(data.message || "Score submitted!");
+                      setScoreSubmitted(true);
+                      setTimeout(() => setScoreSubmitted(false), 3000);
                     })
                     .catch((err) => {
                       console.error("Failed to submit score", err);
-                      alert("Something went wrong saving your score.");
                     });
                 }}
               >
