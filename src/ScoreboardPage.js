@@ -16,7 +16,7 @@ const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [myPage, setMyPage] = useState(0);
   const [topPage, setTopPage] = useState(0);
-  const scoresPerPage = 35;
+  const [scoresPerPage, setScoresPerPage] = useState(30);
   const audio = new Audio(pageTurnSound);
 
   useEffect(() => {
@@ -43,6 +43,20 @@ const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
     }
   }, [isLoggedIn]);
 
+  // 🔥 Dynamically calculate scoresPerPage based on screen height
+  useEffect(() => {
+    const calculateScoresPerPage = () => {
+      const availableHeight = window.innerHeight - 260; // subtract header + padding
+      const approxRowHeight = 20; // consistent across systems
+      const count = Math.floor(availableHeight / approxRowHeight);
+      setScoresPerPage(count);
+    };
+
+    calculateScoresPerPage();
+    window.addEventListener("resize", calculateScoresPerPage);
+    return () => window.removeEventListener("resize", calculateScoresPerPage);
+  }, []);
+
   const handlePageChange = (type, direction) => {
     audio.play();
     setTimeout(() => {
@@ -51,7 +65,7 @@ const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
       } else if (type === "top") {
         setTopPage((prev) => Math.max(0, prev + direction));
       }
-    }, 1000);
+    }, 500);
   };
 
   const toggleExpand = (index) => {
@@ -70,25 +84,27 @@ const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
             {isAuthenticated ? (
               <>
                 <div className="score-header"><h1>My Scores</h1></div>
-                {myPaginated.map((entry, index) => (
-                  <div key={index} className="score-entry">
-                    <div className="score-line">
-                      #{myPage * scoresPerPage + index + 1} — {entry.score} points
-                      <img
-                        src={expandedIndex === index ? arrowUp : arrowDown}
-                        alt="toggle"
-                        className="expand-icon"
-                        onClick={() => toggleExpand(index)}
-                      />
-                    </div>
-                    {expandedIndex === index && (
-                      <div className="score-details">
-                        Played: {new Date(entry.timestamp).toLocaleString()}
+                <div className="score-list">
+                  {myPaginated.map((entry, index) => (
+                    <div key={index} className="score-entry">
+                      <div className="score-line">
+                        #{myPage * scoresPerPage + index + 1} — {entry.score} points
+                        <img
+                          src={expandedIndex === index ? arrowUp : arrowDown}
+                          alt="toggle"
+                          className="expand-icon"
+                          onClick={() => toggleExpand(index)}
+                        />
                       </div>
-                    )}
-                  </div>
-                ))}
-                <div className="arrows">
+                      {expandedIndex === index && (
+                        <div className="score-details">
+                          Played: {new Date(entry.timestamp).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="arrow-controls">
                   {myPage > 0 && (
                     <img
                       src={arrowLeft}
@@ -120,12 +136,14 @@ const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
 
           <div className="score-column right">
             <div className="score-header"><h1>Top Players</h1></div>
-            {topPaginated.map((entry, index) => (
-              <div key={index} className="score-entry">
-                #{topPage * scoresPerPage + index + 1} — {entry.email || "Unknown"}: {entry.score} points
-              </div>
-            ))}
-            <div className="arrows">
+            <div className="score-list">
+              {topPaginated.map((entry, index) => (
+                <div key={index} className="score-entry">
+                  #{topPage * scoresPerPage + index + 1} — {entry.email || "Unknown"}: {entry.score} points
+                </div>
+              ))}
+            </div>
+            <div className="arrow-controls">
               {topPage > 0 && (
                 <img
                   src={arrowLeft}

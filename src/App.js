@@ -19,8 +19,8 @@ function App() {
     }
 
     const checkFullscreen = () => {
-      const minWidth = 1200;
-      const minHeight = 700;
+      const minWidth = 1024;
+      const minHeight = 640;
       const isFullscreen =
         window.innerWidth >= minWidth && window.innerHeight >= minHeight;
 
@@ -69,7 +69,11 @@ function App() {
               alt="Fullscreen Warning"
               style={{ maxWidth: '400px', marginBottom: '20px' }}
             />
-            <p style={{ fontSize: '22px', fontFamily: 'monospace', textAlign: 'center' }}>
+            <p style={{
+              fontSize: '22px',
+              fontFamily: "'Courier New', Courier, monospace",
+              textAlign: 'center'
+            }}>
               Please put me back in full screen
             </p>
           </div>
