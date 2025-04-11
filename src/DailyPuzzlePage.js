@@ -6,6 +6,7 @@ import speakerOnIcon from "./assets/pictures/gamepage/speaker-on.png";
 import speakerOffIcon from "./assets/pictures/gamepage/speaker-off.png";
 import frameBottom from "./assets/pictures/general/frame-bottom.png";
 import gameTheme from "./assets/sounds/gamepage/game-theme.mp3";
+import detectiveImage from "./assets/pictures/general/Daily-sentence-Picture.png";
 
 function DailyPuzzlePage({ onLoginClick, onSignupClick, isLoggedIn }) {
   const audioRef = useRef(null);
@@ -23,6 +24,66 @@ function DailyPuzzlePage({ onLoginClick, onSignupClick, isLoggedIn }) {
 
     setIsPlaying(!isPlaying);
   };
+
+  if (!isLoggedIn) {
+    return (
+      <div
+        style={{
+          backgroundColor: "black",
+          color: "white",
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: "40px",
+          textAlign: "center",
+        }}
+      >
+        <img
+          src={detectiveImage}
+          alt="Detective Login Required"
+          style={{
+            width: "280px",
+            maxWidth: "90%",
+            marginBottom: "30px",
+          }}
+        />
+        <p
+          style={{
+            fontSize: "20px",
+            fontWeight: "bold",
+            maxWidth: "600px",
+            lineHeight: "1.5",
+          }}
+        >
+          To play the Daily Sentence, you need to{" "}
+          <span
+            onClick={onLoginClick}
+            style={{
+              color: "#00BFFF",
+              textDecoration: "underline",
+              cursor: "pointer",
+            }}
+          >
+            log in
+          </span>{" "}
+          or{" "}
+          <span
+            onClick={onSignupClick}
+            style={{
+              color: "#32CD32",
+              textDecoration: "underline",
+              cursor: "pointer",
+            }}
+          >
+            sign up
+          </span>
+          .
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -84,11 +145,7 @@ function DailyPuzzlePage({ onLoginClick, onSignupClick, isLoggedIn }) {
         />
       </div>
 
-      <img
-        src={frameBottom}
-        alt="Bottom Frame"
-        className="frame-bottom"
-      />
+      <img src={frameBottom} alt="Bottom Frame" className="frame-bottom" />
     </div>
   );
 }
