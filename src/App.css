@@ -19,11 +19,17 @@ body {
 }
 
 .game-area {
-  background: white;
+  background-image: url('./assets/pictures/general/parchment-bg.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+  border: 1px solid #c2b280;
   padding: 30px 40px;
   border-radius: 8px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
   text-align: center;
+  width: 90vw;
   max-width: 1200px;
   margin-top: 20px;
   box-sizing: border-box;
@@ -240,13 +246,26 @@ header {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.99);
+  backdrop-filter: blur(3px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
-  z-index: 100;
+  z-index: 9999;
+  animation: fadeInOverlay 0.4s ease;
+}
+
+.game-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.9);
+  background-filter: blur(3px);
+  z-index: 999;
 }
 
 .game-over-screen h2 {
@@ -375,3 +394,19 @@ nav a:hover {
   position: relative;
 }
 
+img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+@keyframes fadeInOverlay {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

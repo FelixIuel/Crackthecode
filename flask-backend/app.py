@@ -29,35 +29,35 @@ def home():
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.json
-    email = data.get("email")
+    username = data.get("username")
     password = data.get("password")
 
-    if not email or not password:
-        return jsonify({"success": False, "error": "Email and password are required"}), 400
+    if not username or not password:
+        return jsonify({"success": False, "error": "Username and password are required"}), 400
 
-    existing_user = mongo.db.users.find_one({"email": email})
+    existing_user = mongo.db.users.find_one({"username": username})
     if existing_user:
         return jsonify({"success": False, "error": "User already exists"}), 400
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    mongo.db.users.insert_one({"email": email, "password": hashed_password})
+    mongo.db.users.insert_one({"username": username, "password": hashed_password})
 
     return jsonify({"success": True, "message": "User created successfully!"}), 201
 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
-    email = data.get("email")
+    username = data.get("username")
     password = data.get("password")
 
-    if not email or not password:
-        return jsonify({"success": False, "error": "Email and password are required"}), 400
+    if not username or not password:
+        return jsonify({"success": False, "error": "Username and password are required"}), 400
 
-    user = mongo.db.users.find_one({"email": email})
+    user = mongo.db.users.find_one({"username": username})
     if not user or not bcrypt.check_password_hash(user['password'], password):
-        return jsonify({"success": False, "error": "Invalid email or password"}), 401
+        return jsonify({"success": False, "error": "Invalid username or password"}), 401
 
-    token = create_access_token(identity=email)
+    token = create_access_token(identity=username)
     return jsonify({"success": True, "access_token": token}), 200
 
 @app.route('/profile', methods=['GET'])
@@ -80,9 +80,8 @@ def submit_score():
     if score is None or session_id is None:
         return jsonify({"success": False, "error": "Missing score or sessionId"}), 400
 
-    # Prevent duplicate submission
     existing = mongo.db.scores.find_one({
-        "email": current_user,
+        "username": current_user,
         "sessionId": session_id
     })
 
@@ -90,7 +89,7 @@ def submit_score():
         return jsonify({"success": False, "error": "Score already submitted for this session"}), 409
 
     mongo.db.scores.insert_one({
-        "email": current_user,
+        "username": current_user,
         "score": score,
         "timestamp": timestamp or datetime.utcnow().isoformat(),
         "sessionId": session_id
@@ -100,10 +99,9 @@ def submit_score():
 
 @app.route('/get-highscores', methods=['GET'])
 def get_highscores():
-    # Use aggregation to get each user's best score
     pipeline = [
         {"$group": {
-            "_id": "$email",
+            "_id": "$username",
             "best_score": {"$max": "$score"},
             "timestamp": {"$first": "$timestamp"}
         }},
@@ -114,7 +112,7 @@ def get_highscores():
     scores = list(mongo.db.scores.aggregate(pipeline))
     result = [
         {
-            "email": s["_id"],
+            "username": s["_id"],
             "score": s["best_score"],
             "timestamp": s.get("timestamp", "")
         }
@@ -122,12 +120,11 @@ def get_highscores():
     ]
     return jsonify({"success": True, "highscores": result}), 200
 
-
 @app.route('/my-scores', methods=['GET'])
 @jwt_required()
 def get_my_scores():
     current_user = get_jwt_identity()
-    scores = list(mongo.db.scores.find({"email": current_user}).sort("score", -1))
+    scores = list(mongo.db.scores.find({"username": current_user}).sort("score", -1))
     result = []
     for s in scores:
         result.append({
@@ -160,6 +157,14 @@ def get_bogus_hint():
         return jsonify({"text": "No hints found."}), 404
     hint = random.choice(hints)
     return jsonify(hint)
+
+@app.route('/phoneline', methods=['GET'])
+def get_random_phone_line():
+    lines = list(mongo.db.phonelines.find())
+    if not lines:
+        return jsonify({"success": False, "message": "No phone lines found."}), 404
+    chosen = random.choice(lines)
+    return jsonify({"success": True, "message": chosen.get("message", "")})
 
 # ========== START APP ==========
 

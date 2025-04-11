@@ -1,107 +1,156 @@
+html, body {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: 'Courier New', Courier, monospace;
+}
 .explanation-page-wrapper {
-    background-color: black;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100vh;
-    overflow: auto;
-  }
-  
-  .explanation-background-wrapper {
-    position: relative;
-    width: 100vw;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .explanation-background-image {
-    width: 100%;
-    height: auto;
-    display: block;
-    z-index: 0;
-  }
-  
-  .explanation-overlay {
-    position: absolute;
-    top: 120px;
-    width: 100%;
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 60px;
-    z-index: 2;
-    box-sizing: border-box;
-    pointer-events: none;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-  }
-  
-  .explanation-box-container {
-    display: flex;
-    gap: 40px;
-    justify-content: center;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    pointer-events: auto;
-    width: 100%;
-  }
-  
-  .note-box {
-    background-color: rgba(255, 255, 255, 0.92);
-    border-radius: 10px;
-    padding: 30px;
-    font-family: 'Courier New', Courier, monospace;
-    color: black;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    line-height: 1.6;
-  }
-  
-  .small-note {
-    flex: 1;
-    max-width: 320px;
-    min-width: 260px;
-    max-height: 650px;
-    overflow-y: auto;
-  }
-  
-  .large-note {
-    flex: 2;
-    min-width: 500px;
-    max-width: 800px;
-  }
-  
-  .note-box h2 {
-    margin-top: 0;
-    font-size: 22px;
-    margin-bottom: 16px;
-    text-decoration: underline;
-  }
-  
-  .note-box ul {
-    margin-top: 10px;
-    padding-left: 20px;
-  }
-  
-  .felix-portrait {
-    width: 100%;
-    max-width: 160px;
-    margin: 0 auto 20px auto;
-    border-radius: 6px;
-    display: block;
-    box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.4);
-  }
-  
-  .memo-text {
-    overflow-y: auto;
-    max-height: 500px;
-  }
-  
-  .explanation-frame {
-    width: 100%;
-    height: auto;
-    display: block;
-    z-index: 1;
-    margin-top: auto;
-  }
-  
+  position: relative;
+  min-height: 100vh;
+  background-color: black;
+}
+
+.explanation-background-image {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.explanation-overlay {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  padding: 80px 60px;
+  box-sizing: border-box;
+}
+
+.explanation-box-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  max-width: 1600px;
+  width: 100%;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.note-box {
+  border-radius: 10px;
+  padding: 30px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  color: #1e1e1e;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.memo-box {
+  flex: 1;
+  max-width: 400px;
+  min-width: 280px;
+  max-height: 80vh;
+}
+
+.play-box {
+  flex: 2;
+  min-width: 500px;
+  max-width: 800px;
+  max-height: 80vh;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.note-box h2,
+.note-box h3 {
+  margin-top: 0;
+  font-size: 22px;
+  margin-bottom: 16px;
+  text-decoration: underline;
+}
+
+.note-box ul {
+  padding-left: 20px;
+  margin-top: 10px;
+}
+
+.felix-image {
+  width: 100%;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.parchment-box {
+  background-image: url('./assets/pictures/general/parchment-bg.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+  border: 1px solid #c2b280;
+}
+
+.slideshow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.slide-image {
+  max-width: 100%;
+  max-height: 280px;
+  border-radius: 6px;
+  border: 1px solid #4c3a28;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.slide-btn {
+  background-color: #c2b280;
+  border: none;
+  font-size: 24px;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.slide-btn:hover {
+  background-color: #b0a06e;
+}
+
+.call-detective {
+  text-align: center;
+  margin-top: 20px;
+  cursor: pointer;
+  animation: swing 3s infinite ease-in-out;
+}
+
+.call-detective img {
+  width: 80px;
+  height: auto;
+  transform-origin: center;
+}
+
+.call-detective p {
+  margin-top: 8px;
+  font-style: italic;
+  font-weight: bold;
+  color: #3a2b18;
+}
+
+@keyframes swing {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(3deg); }
+  50%  { transform: rotate(0deg); }
+  75%  { transform: rotate(-3deg); }
+  100% { transform: rotate(0deg); }
+}

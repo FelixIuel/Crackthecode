@@ -18,7 +18,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
   const [score, setScore] = useState(0);
   const [usedSentences, setUsedSentences] = useState([]);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
-  const [gameSessionId] = useState(uuidv4());
+  const [gameSessionId, setGameSessionId] = useState(uuidv4());
 
   const correctCount = useRef(0);
   const inputRefs = useRef([]);
@@ -175,6 +175,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
     correctCount.current = 0;
     setLives(10);
     setScoreSubmitted(false);
+    setGameSessionId(uuidv4()); // <-- 🔥 New session ID for each game
     fetchPuzzle();
   };
 
@@ -198,6 +199,8 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
           Score received by the Detective!
         </div>
       )}
+
+      {gameOver && <div className="game-overlay"></div>}
 
       <div className="game-area">
         <div className="game-header">

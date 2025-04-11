@@ -12,7 +12,7 @@ function Header({
   isLoggedIn,
   setIsLoggedIn
 }) {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState("");
 
@@ -36,7 +36,7 @@ function Header({
       const response = await fetch('http://127.0.0.1:5000/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
       const data = await response.json();
       if (data.access_token) {
@@ -58,11 +58,11 @@ function Header({
       const response = await fetch('http://127.0.0.1:5000/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
       const data = await response.json();
       showMessage(data.message || "Signup failed");
-      setIsLoggedIn(true); // optional but helpful if auto-login after signup
+      setIsLoggedIn(true);
       setShowSignupModal(false);
     } catch (error) {
       console.error('Error signing up:', error);
@@ -190,10 +190,10 @@ function Header({
         }}>
           <h2 style={{ color: 'white', textAlign: 'center' }}>{isSignup ? 'Sign Up' : 'Login'}</h2>
           <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             style={{
               marginBottom: '1rem',
               padding: '0.5rem',
