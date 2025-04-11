@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import logo from './assets/pictures/general/logo192.png';
+import './Header.css';
 
 function Header({
   onLoginClick,
@@ -12,7 +13,7 @@ function Header({
   isLoggedIn,
   setIsLoggedIn
 }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState("");
 
@@ -36,7 +37,7 @@ function Header({
       const response = await fetch('http://127.0.0.1:5000/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
       if (data.access_token) {
@@ -58,7 +59,7 @@ function Header({
       const response = await fetch('http://127.0.0.1:5000/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
       showMessage(data.message || "Signup failed");
@@ -79,155 +80,61 @@ function Header({
   return (
     <>
       {message && (
-        <div style={{
-          position: 'fixed',
-          top: '60px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: '#28a745',
-          color: 'white',
-          padding: '10px 20px',
-          borderRadius: '6px',
-          zIndex: 3000,
-          boxShadow: '0px 2px 10px rgba(0,0,0,0.3)',
-          fontWeight: 'bold',
-          textAlign: 'center'
-        }}>
-          {message}
-        </div>
+        <div className="header-message">{message}</div>
       )}
 
-      <header style={{
-        backgroundColor: '#1f1f1f',
-        padding: '1rem',
-        color: 'white',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000
-      }}>
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <img src={logo} alt="Logo" style={{ width: '40px', height: '40px', marginRight: '10px' }} />
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-            <Link to="/" style={{ textDecoration: 'none', color: 'white' }}>
-              Crack The Code
-            </Link>
+      <header className="main-header">
+        <div className="logo-title">
+          <img src={logo} alt="Logo" />
+          <Link to="/">Crack The Code</Link>
+        </div>
+
+        <nav className="nav-links">
+          <div className="dropdown-wrapper">
+            <span className="dropdown-title">Play</span>
+            <div className="dropdown-menu">
+              <Link to="/" className="dropdown-item">Endless Run</Link>
+              <Link to="/daily" className="dropdown-item">Daily Sentence</Link>
+            </div>
           </div>
-        </div>
 
-        {/* Nav Links */}
-        <div style={{ display: 'flex', justifyContent: 'center', flexGrow: 1 }}>
-          <Link to="/" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none' }}>Play</Link>
-          <Link to="/explanation" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none' }}>How to Play</Link>
-          <Link to="/scoreboard" style={{ color: 'white', textDecoration: 'none' }}>Scoreboard</Link>
-        </div>
+          <Link to="/explanation" className="nav-link">How to Play</Link>
+          <Link to="/scoreboard" className="nav-link">Scoreboard</Link>
+        </nav>
 
-        {/* Auth Buttons */}
-        <div style={{ marginLeft: 'auto' }}>
+        <div className="auth-buttons">
           {!isLoggedIn ? (
             <>
-              <button
-                onClick={onLoginClick}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#007BFF',
-                  color: 'white',
-                  border: 'none',
-                  cursor: 'pointer',
-                  marginRight: '1rem'
-                }}
-              >
-                Login
-              </button>
-              <button
-                onClick={onSignupClick}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                Sign Up
-              </button>
+              <button onClick={onLoginClick} className="login-btn">Login</button>
+              <button onClick={onSignupClick} className="signup-btn">Sign Up</button>
             </>
           ) : (
-            <button
-              onClick={handleLogout}
-              style={{
-                color: 'white',
-                backgroundColor: 'transparent',
-                border: '1px solid white',
-                padding: '0.5rem 1rem'
-              }}
-            >
-              Logout
-            </button>
+            <button onClick={handleLogout} className="logout-btn">Logout</button>
           )}
         </div>
       </header>
 
-      {/* Modal */}
       {isModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          backgroundColor: 'rgba(0, 0, 0, 0.9)',
-          padding: '2rem',
-          borderRadius: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          width: '300px',
-          zIndex: 2000
-        }}>
-          <h2 style={{ color: 'white', textAlign: 'center' }}>{isSignup ? 'Sign Up' : 'Login'}</h2>
+        <div className="auth-modal">
+          <h2 style={{ color: 'white', textAlign: 'center' }}>
+            {isSignup ? 'Sign Up' : 'Login'}
+          </h2>
           <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={{
-              marginBottom: '1rem',
-              padding: '0.5rem',
-              borderRadius: '4px',
-              width: '100%',
-              display: 'block',
-              boxSizing: 'border-box',
-            }}
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
           <input
             type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{
-              marginBottom: '1rem',
-              padding: '0.5rem',
-              borderRadius: '4px',
-              width: '100%',
-              display: 'block',
-              boxSizing: 'border-box',
-            }}
           />
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div className="modal-buttons">
             <button
               onClick={isSignup ? handleSignup : handleLogin}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: isSignup ? '#28a745' : '#007BFF',
-                color: 'white',
-                border: 'none',
-                cursor: 'pointer',
-                width: '48%'
-              }}
+              className="submit-btn"
             >
               {isSignup ? 'Sign Up' : 'Login'}
             </button>
@@ -236,14 +143,7 @@ function Header({
                 setShowLoginModal(false);
                 setShowSignupModal(false);
               }}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#dc3545',
-                color: 'white',
-                border: 'none',
-                cursor: 'pointer',
-                width: '48%'
-              }}
+              className="close-btn"
             >
               Close
             </button>

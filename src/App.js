@@ -5,6 +5,8 @@ import ExplanationPage from './ExplanationPage';
 import ScoreboardPage from './ScoreboardPage';
 import Header from './Header';
 import angryImage from './assets/pictures/general/fullscreen-warning.png';
+import DailyPuzzlePage from './DailyPuzzlePage';
+
 
 function App() {
   const [showLogin, setShowLogin] = useState(false);
@@ -113,6 +115,7 @@ function App() {
               />
             }
           />
+          <Route path="/daily" element={<DailyPuzzlePage />} />
         </Routes>
       </div>
     </Router>

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import LetterPuzzle from "./LetterPuzzle";
+import DailyLetterPuzzle from "./DailyLetterPuzzle";
 
 import backgroundImg from "./assets/pictures/gamepage/GamePage-Background.png";
 import speakerOnIcon from "./assets/pictures/gamepage/speaker-on.png";
@@ -7,7 +7,7 @@ import speakerOffIcon from "./assets/pictures/gamepage/speaker-off.png";
 import frameBottom from "./assets/pictures/general/frame-bottom.png";
 import gameTheme from "./assets/sounds/gamepage/game-theme.mp3";
 
-function GamePage({ onLoginClick, onSignupClick, isLoggedIn }) {
+function DailyPuzzlePage({ onLoginClick, onSignupClick, isLoggedIn }) {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -38,9 +38,8 @@ function GamePage({ onLoginClick, onSignupClick, isLoggedIn }) {
         overflowX: "hidden",
         overflowY: "auto",
         height: "100vh",
-    }}
-  >
-  
+      }}
+    >
       {/* Music toggle */}
       <div
         onClick={toggleMusic}
@@ -50,7 +49,7 @@ function GamePage({ onLoginClick, onSignupClick, isLoggedIn }) {
           right: "20px",
           zIndex: 1000,
           textAlign: "center",
-          cursor: "pointer"
+          cursor: "pointer",
         }}
       >
         <div
@@ -59,7 +58,7 @@ function GamePage({ onLoginClick, onSignupClick, isLoggedIn }) {
             fontSize: "14px",
             fontWeight: "bold",
             textShadow: "1px 1px 3px black",
-            marginBottom: "5px"
+            marginBottom: "5px",
           }}
         >
           Turn music {isPlaying ? "off" : "on"}
@@ -78,7 +77,7 @@ function GamePage({ onLoginClick, onSignupClick, isLoggedIn }) {
       </audio>
 
       <div className="container">
-        <LetterPuzzle
+        <DailyLetterPuzzle
           onLoginClick={onLoginClick}
           onSignupClick={onSignupClick}
           isLoggedIn={isLoggedIn}
@@ -94,4 +93,4 @@ function GamePage({ onLoginClick, onSignupClick, isLoggedIn }) {
   );
 }
 
-export default GamePage;
+export default DailyPuzzlePage;
