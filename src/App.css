@@ -9,7 +9,6 @@ html, body {
   overflow-y: auto;
 }
 
-
 .game-wrapper {
   display: flex;
   flex-direction: column;
@@ -385,16 +384,6 @@ nav a:hover {
 
 .floating-box {
   display: none;
-}
-
-.frame-bottom {
-  width: 100%;
-  height: 40px;
-  object-fit: cover;
-  display: block;
-  margin-top: -5px;
-  z-index: 2;
-  position: relative;
 }
 
 img {

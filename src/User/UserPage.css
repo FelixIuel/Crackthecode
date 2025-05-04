@@ -1,0 +1,119 @@
+.user-page-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 0;
+}
+
+.profile-container {
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 20px;
+}
+
+/* PARCHMENT TWO-COLUMN LAYOUT */
+.parchment-box.two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  padding: 40px;
+  background-color: rgba(245, 222, 179, 0.5);
+  border: 1px solid black;
+  border-radius: 8px;
+}
+
+.left-column,
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* SEARCH IN RIGHT COLUMN */
+.search-other-users {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.search-other-users h3 {
+  color: black;
+  margin-bottom: 10px;
+}
+
+.search-other-users input {
+  padding: 8px 12px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  border: 1px solid black;
+  border-radius: 4px;
+  width: 250px;
+}
+
+/* GUEST FALLBACK */
+.guest-prompt-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 80px;
+  text-align: center;
+}
+
+.guest-image {
+  max-width: 400px;
+  margin-bottom: 20px;
+}
+
+.guest-message {
+  font-size: 22px;
+  color: white;
+  font-family: 'Courier New', Courier, monospace;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 20px;
+  border: 1px solid white;
+  border-radius: 8px;
+  max-width: 600px;
+}
+
+/* Upload area inside picture box */
+.upload-placeholder {
+  color: black;
+  font-size: 14px;
+  font-family: 'Courier New', Courier, monospace;
+  cursor: pointer;
+  padding: 4px 8px;
+  background-color: #f7e5ba;
+  border: 1px solid black;
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* Uniform button for Edit/Save */
+.edit-save-btn {
+  margin-top: 10px;
+  padding: 6px 12px;
+  background-color: #f7e5ba;
+  border: 1px solid black;
+  font-family: 'Courier New', Courier, monospace;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.profile-pic-wrapper {
+  width: 100px;
+  height: 100px;
+  border: 2px solid black;
+  background-color: wheat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.profile-pic-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

@@ -175,7 +175,7 @@ const LetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
     correctCount.current = 0;
     setLives(10);
     setScoreSubmitted(false);
-    setGameSessionId(uuidv4()); // <-- 🔥 New session ID for each game
+    setGameSessionId(uuidv4());
     fetchPuzzle();
   };
 

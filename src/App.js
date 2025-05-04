@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+
 import GamePage from './GamePage';
 import ExplanationPage from './ExplanationPage';
 import ScoreboardPage from './ScoreboardPage';
-import Header from './Header';
-import angryImage from './assets/pictures/general/fullscreen-warning.png';
 import DailyPuzzlePage from './DailyPuzzlePage';
+import CategoriesPage from './CategoriesPage';
+import UserPage from './User/UserPage';
+import Header from './Header';
 
+import angryImage from './assets/pictures/general/fullscreen-warning.png';
 
 function App() {
   const [showLogin, setShowLogin] = useState(false);
@@ -23,9 +26,7 @@ function App() {
     const checkFullscreen = () => {
       const minWidth = 1024;
       const minHeight = 640;
-      const isFullscreen =
-        window.innerWidth >= minWidth && window.innerHeight >= minHeight;
-
+      const isFullscreen = window.innerWidth >= minWidth && window.innerHeight >= minHeight;
       setNotFullscreen(!isFullscreen);
     };
 
@@ -66,11 +67,7 @@ function App() {
             alignItems: 'center',
             zIndex: 9999
           }}>
-            <img
-              src={angryImage}
-              alt="Fullscreen Warning"
-              style={{ maxWidth: '400px', marginBottom: '20px' }}
-            />
+            <img src={angryImage} alt="Fullscreen Warning" style={{ maxWidth: '400px', marginBottom: '20px' }} />
             <p style={{
               fontSize: '22px',
               fontFamily: "'Courier New', Courier, monospace",
@@ -82,40 +79,60 @@ function App() {
         )}
 
         <Routes>
-          <Route
-            path="/"
-            element={
-              <GamePage
-                onLoginClick={() => {
-                  setShowSignup(false);
-                  setShowLogin(true);
-                }}
-                onSignupClick={() => {
-                  setShowLogin(false);
-                  setShowSignup(true);
-                }}
-                isLoggedIn={isLoggedIn}
-              />
-            }
-          />
+          <Route path="/" element={
+            <GamePage
+              onLoginClick={() => {
+                setShowSignup(false);
+                setShowLogin(true);
+              }}
+              onSignupClick={() => {
+                setShowLogin(false);
+                setShowSignup(true);
+              }}
+              isLoggedIn={isLoggedIn}
+            />
+          } />
           <Route path="/explanation" element={<ExplanationPage />} />
-          <Route
-            path="/scoreboard"
-            element={
-              <ScoreboardPage
-                onLoginClick={() => {
-                  setShowSignup(false);
-                  setShowLogin(true);
-                }}
-                onSignupClick={() => {
-                  setShowLogin(false);
-                  setShowSignup(true);
-                }}
-                isLoggedIn={isLoggedIn}
-              />
-            }
-          />
-          <Route path="/daily" element={<DailyPuzzlePage />} />
+          <Route path="/scoreboard" element={
+            <ScoreboardPage
+              onLoginClick={() => {
+                setShowSignup(false);
+                setShowLogin(true);
+              }}
+              onSignupClick={() => {
+                setShowLogin(false);
+                setShowSignup(true);
+              }}
+              isLoggedIn={isLoggedIn}
+            />
+          } />
+          <Route path="/daily" element={
+            <DailyPuzzlePage
+              onLoginClick={() => {
+                setShowSignup(false);
+                setShowLogin(true);
+              }}
+              onSignupClick={() => {
+                setShowLogin(false);
+                setShowSignup(true);
+              }}
+              isLoggedIn={isLoggedIn}
+            />
+          } />
+          <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/profile" element={
+            <UserPage
+              onLoginClick={() => {
+                setShowSignup(false);
+                setShowLogin(true);
+              }}
+              onSignupClick={() => {
+                setShowLogin(false);
+                setShowSignup(true);
+              }}
+              isLoggedIn={isLoggedIn}
+            />
+          } />
         </Routes>
       </div>
     </Router>

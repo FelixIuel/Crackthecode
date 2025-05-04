@@ -1,43 +1,80 @@
 import React, { useState, useRef, useEffect } from "react";
 import "./App.css";
 import hintCharacter from "./assets/pictures/gamepage/hint-character.png";
+import alreadyPlayedImage from "./assets/pictures/gamepage/already-played.png";
 
 const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
-  const sentence = "Daily sentence is here";
-  const category = "Daily Puzzle";
-  const hint = "This is your only shot!";
-  const letterMapping = {}; // Empty for now – can add later if needed
-  const revealedLetters = [];
-
+  const [sentence, setSentence] = useState("");
+  const [category, setCategory] = useState("Daily Puzzle");
+  const [hint, setHint] = useState("Try your best!");
+  const [letterMapping, setLetterMapping] = useState({});
+  const [revealedLetters, setRevealedLetters] = useState([]);
   const [userInput, setUserInput] = useState([]);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [lives, setLives] = useState(3);
-  const [gameOver, setGameOver] = useState(false);
+  const [lives, setLives] = useState(5);
+  const [alreadyPlayed, setAlreadyPlayed] = useState(false);
+  const [lostGame, setLostGame] = useState(false);
+  const [showBlackScreen, setShowBlackScreen] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [hintText, setHintText] = useState("");
 
   const inputRefs = useRef([]);
   const timeoutRefs = useRef({});
 
+  useEffect(() => {
+    const fetchDailyPuzzle = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token || token.trim() === "" || token === "undefined" || token === "null") {
+        console.error("No valid token found. Cannot fetch daily puzzle.");
+        return;
+      }
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/daily-puzzle", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          if (data.error === "Already played today") {
+            setTimeout(() => setShowBlackScreen(true), 500); // tiny smooth delay
+            setAlreadyPlayed(true);
+          }
+          return;
+        }
+
+        setSentence(data.sentence || "");
+        setHint(data.hint || "Try your best!");
+        setLetterMapping(data.letterMap || {});
+        setRevealedLetters(data.revealedLetters || []);
+
+        const cleanSentence = (data.sentence || "").replace(/[^a-zA-Z]/g, "");
+        const initialInput = Array(cleanSentence.length).fill("");
+
+        (data.revealedLetters || []).forEach((letter) => {
+          for (let i = 0; i < cleanSentence.length; i++) {
+            if (cleanSentence[i].toLowerCase() === letter.toLowerCase()) {
+              initialInput[i] = letter.toLowerCase();
+            }
+          }
+        });
+
+        setUserInput(initialInput);
+        inputRefs.current = [];
+        timeoutRefs.current = {};
+
+      } catch (error) {
+        console.error("Failed to fetch daily puzzle:", error);
+      }
+    };
+
+    fetchDailyPuzzle();
+  }, []);
+
   const correctLetters = sentence.replace(/[^a-zA-Z]/g, "").split("");
   const words = sentence.split(" ");
-
-  useEffect(() => {
-    const cleanSentence = sentence.replace(/[^a-zA-Z]/g, "");
-    const initialInput = Array(cleanSentence.length).fill("");
-
-    revealedLetters.forEach((letter) => {
-      for (let i = 0; i < cleanSentence.length; i++) {
-        if (cleanSentence[i].toLowerCase() === letter.toLowerCase()) {
-          initialInput[i] = letter.toLowerCase();
-        }
-      }
-    });
-
-    setUserInput(initialInput);
-    inputRefs.current = [];
-    timeoutRefs.current = {};
-  }, []);
 
   const handleChange = (index, value) => {
     if (/^[a-zA-Z]?$/.test(value)) {
@@ -54,23 +91,23 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
           delete timeoutRefs.current[index];
         }
 
-        const nextIndex = newInput.findIndex((val, i) => i > index && val === "");
+        const nextIndex = newInput.findIndex((v, i) => i > index && v === "");
         if (nextIndex !== -1 && inputRefs.current[nextIndex]) {
           inputRefs.current[nextIndex].focus();
         }
 
-        const fullInput = newInput.join("").toLowerCase();
-        const correctAnswer = correctLetters.join("").toLowerCase();
-        if (fullInput === correctAnswer) {
+        if (newInput.join("").toLowerCase() === correctLetters.join("").toLowerCase()) {
           setIsCorrect(true);
         }
-
         return;
       }
 
-      setLives((prev) => {
+      setLives(prev => {
         const updated = Math.max(prev - 1, 0);
-        if (updated === 0) setGameOver(true);
+        if (updated === 0) {
+          setTimeout(() => setShowBlackScreen(true), 500); // tiny delay before black screen
+          setLostGame(true);
+        }
         return updated;
       });
 
@@ -79,9 +116,9 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
       }
 
       timeoutRefs.current[index] = setTimeout(() => {
-        setUserInput((prevInput) => {
-          const updated = [...prevInput];
-          if (updated[index]?.toLowerCase() !== correctLetter) {
+        setUserInput(prev => {
+          const updated = [...prev];
+          if (updated[index] !== correctLetter) {
             updated[index] = "";
           }
           return updated;
@@ -92,17 +129,61 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
   };
 
   const showBogusHint = () => {
-    setHintText("Try your best!");
-    setShowHint(true);
-    setTimeout(() => setShowHint(false), 3000);
+    fetch("http://127.0.0.1:5000/get-bogus-hint")
+      .then(res => res.json())
+      .then(data => {
+        setHintText(data.text || "No hint available.");
+        setShowHint(true);
+        setTimeout(() => setShowHint(false), 3000);
+      })
+      .catch(err => {
+        console.error("Failed to fetch bogus hint:", err);
+      });
   };
 
   let letterIndex = 0;
 
+  if (showBlackScreen) {
+    return (
+      <div style={{
+        backgroundColor: "black",
+        color: "white",
+        minHeight: "calc(100vh - 80px)",
+        width: "100vw",
+        position: "fixed",
+        top: "70px",
+        left: "0",
+        zIndex: "999",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        textAlign: "center",
+        padding: "40px",
+        animation: "fadeIn 1s ease forwards"
+      }}>
+        <img
+          src={alreadyPlayedImage}
+          alt="Already Played"
+          style={{ width: "280px", maxWidth: "90%", marginBottom: "30px" }}
+        />
+        <p style={{
+          fontSize: "22px",
+          fontFamily: "'Courier New', Courier, monospace",
+          maxWidth: "600px"
+        }}>
+          {alreadyPlayed ? (
+            <>You already cracked today's sentence. Come back tomorrow!</>
+          ) : (
+            <>You lost all your lives. Try again tomorrow!</>
+          )}
+        </p>
+      </div>
+    );
+  }
+  
   return (
     <div className="game-wrapper">
-      {gameOver && <div className="game-overlay"></div>}
-
       <div className="game-area">
         <div className="game-header">
           <h2 className="category">{category}</h2>
@@ -115,84 +196,56 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
               <div className="word-group">
                 {word.split("").map((char, i) => {
                   const isLetter = /[a-zA-Z]/.test(char);
-                  let currentLetterIndex = null;
+                  let idx = null;
 
                   if (isLetter) {
-                    currentLetterIndex = letterIndex;
+                    idx = letterIndex;
                     letterIndex++;
                   }
 
                   return isLetter ? (
                     <div key={`${wordIndex}-${i}`} className="input-box">
                       <input
-                        ref={(el) => (inputRefs.current[currentLetterIndex] = el)}
+                        ref={el => (inputRefs.current[idx] = el)}
                         type="text"
-                        disabled={gameOver}
+                        maxLength="1"
+                        value={userInput[idx]}
+                        readOnly={userInput[idx]?.toLowerCase() === correctLetters[idx]?.toLowerCase()}
+                        onChange={e => handleChange(idx, e.target.value)}
                         className={
-                          userInput[currentLetterIndex] &&
-                          userInput[currentLetterIndex].toLowerCase() ===
-                            correctLetters[currentLetterIndex]?.toLowerCase()
+                          userInput[idx] &&
+                          userInput[idx].toLowerCase() === correctLetters[idx]?.toLowerCase()
                             ? "correct-input"
-                            : userInput[currentLetterIndex] &&
-                              userInput[currentLetterIndex].toLowerCase() !==
-                                correctLetters[currentLetterIndex]?.toLowerCase()
+                            : userInput[idx] &&
+                              userInput[idx].toLowerCase() !== correctLetters[idx]?.toLowerCase()
                             ? "incorrect"
                             : ""
                         }
-                        readOnly={
-                          userInput[currentLetterIndex] &&
-                          userInput[currentLetterIndex].toLowerCase() ===
-                            correctLetters[currentLetterIndex]?.toLowerCase()
-                        }
-                        maxLength="1"
-                        value={userInput[currentLetterIndex]}
-                        onChange={(e) =>
-                          handleChange(currentLetterIndex, e.target.value)
-                        }
+                        disabled={lostGame}
                       />
                       <span className="number-label">
                         {letterMapping[char.toLowerCase()] || ""}
                       </span>
-                      {userInput[currentLetterIndex] &&
-                        userInput[currentLetterIndex].toLowerCase() !==
-                          correctLetters[currentLetterIndex]?.toLowerCase() && (
-                          <span className="error-text">Wrong!</span>
-                        )}
                     </div>
                   ) : null;
                 })}
               </div>
-              {wordIndex < words.length - 1 && (
-                <div className="space-box">&nbsp;&nbsp;&nbsp;</div>
-              )}
+              {wordIndex < words.length - 1 && <div className="space-box">&nbsp;&nbsp;&nbsp;</div>}
             </React.Fragment>
           ))}
         </div>
 
         {isCorrect && <div className="success-message">Correct!</div>}
-
-        {gameOver && (
-          <div className="game-over-screen full-screen">
-            <h2>Game Over!</h2>
-            <p>You lost all your lives. Try again tomorrow!</p>
-          </div>
-        )}
       </div>
 
       <div className="life-bar centered">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <span key={i} className={`heart ${i < lives ? "full" : "empty"}`}>
-            &#10084;
-          </span>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <span key={i} className={`heart ${i < lives ? "full" : "empty"}`}>&#10084;</span>
         ))}
       </div>
 
       <div className="hint-character" onClick={showBogusHint}>
-        <img
-          src={hintCharacter}
-          alt="Hint Character"
-          className="hint-image"
-        />
+        <img src={hintCharacter} alt="Hint Character" className="hint-image" />
         <div className="hint-text">Ask me</div>
         {showHint && <div className="speech-bubble">{hintText}</div>}
       </div>

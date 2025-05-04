@@ -144,8 +144,6 @@ function DailyPuzzlePage({ onLoginClick, onSignupClick, isLoggedIn }) {
           isLoggedIn={isLoggedIn}
         />
       </div>
-
-      <img src={frameBottom} alt="Bottom Frame" className="frame-bottom" />
     </div>
   );
 }

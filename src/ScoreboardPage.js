@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./ScoreboardPage.css";
 import backgroundImg from "./assets/pictures/scoreboard/scorebook-background.png";
-import frameBottom from "./assets/pictures/general/frame-bottom.png";
 import questionImage from "./assets/pictures/scoreboard/guest-question.png";
 import arrowDown from "./assets/pictures/scoreboard/arrow-down.png";
 import arrowUp from "./assets/pictures/scoreboard/arrow-up.png";
@@ -13,23 +12,21 @@ const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
   const [myScores, setMyScores] = useState([]);
   const [topScores, setTopScores] = useState([]);
   const [expandedIndex, setExpandedIndex] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [myPage, setMyPage] = useState(0);
   const [topPage, setTopPage] = useState(0);
   const [scoresPerPage, setScoresPerPage] = useState(30);
   const audio = new Audio(pageTurnSound);
 
+  // Fetch scores when page loads or login status changes
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsAuthenticated(!!token);
-
     fetch("http://127.0.0.1:5000/get-highscores")
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setTopScores(data.highscores);
       });
 
-    if (token) {
+    if (isLoggedIn) {
+      const token = localStorage.getItem("token");
       fetch("http://127.0.0.1:5000/my-scores", {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -38,8 +35,13 @@ const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
           if (data.success) {
             const sorted = [...data.scores].sort((a, b) => b.score - a.score);
             setMyScores(sorted);
+          } else {
+            setMyScores([]);
           }
-        });
+        })
+        .catch(() => setMyScores([]));
+    } else {
+      setMyScores([]);
     }
   }, [isLoggedIn]);
 
@@ -80,7 +82,7 @@ const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
         <img src={backgroundImg} alt="Notebook" className="scoreboard-background-image" />
         <div className="scoreboard-overlay">
           <div className="score-column left">
-            {isAuthenticated ? (
+            {isLoggedIn ? (
               <>
                 <div className="score-header"><h1>My Scores</h1></div>
                 <div className="score-list">
@@ -167,7 +169,6 @@ const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
             </div>
           </div>
         </div>
-        <img src={frameBottom} alt="Frame Bottom" className="frame-bottom scoreboard-frame" />
       </div>
     </div>
   );

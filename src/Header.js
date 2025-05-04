@@ -37,7 +37,7 @@ function Header({
       const response = await fetch('http://127.0.0.1:5000/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username: email, password }),
       });
       const data = await response.json();
       if (data.access_token) {
@@ -46,7 +46,7 @@ function Header({
         showMessage("Login successful!");
         setShowLoginModal(false);
       } else {
-        showMessage("Login failed!");
+        showMessage(data.error || "Login failed!");
       }
     } catch (error) {
       console.error('Error logging in:', error);
@@ -59,12 +59,16 @@ function Header({
       const response = await fetch('http://127.0.0.1:5000/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username: email, password }),
       });
       const data = await response.json();
-      showMessage(data.message || "Signup failed");
-      setIsLoggedIn(true);
-      setShowSignupModal(false);
+      if (data.success) {
+        showMessage("Signup successful!");
+        setIsLoggedIn(true);
+        setShowSignupModal(false);
+      } else {
+        showMessage(data.error || "Signup failed");
+      }
     } catch (error) {
       console.error('Error signing up:', error);
       showMessage("Something went wrong.");
@@ -79,9 +83,7 @@ function Header({
 
   return (
     <>
-      {message && (
-        <div className="header-message">{message}</div>
-      )}
+      {message && <div className="header-message">{message}</div>}
 
       <header className="main-header">
         <div className="logo-title">
@@ -95,11 +97,13 @@ function Header({
             <div className="dropdown-menu">
               <Link to="/" className="dropdown-item">Endless Run</Link>
               <Link to="/daily" className="dropdown-item">Daily Sentence</Link>
+              <Link to="/categories" className="dropdown-item">Categories</Link>
             </div>
           </div>
 
           <Link to="/explanation" className="nav-link">How to Play</Link>
           <Link to="/scoreboard" className="nav-link">Scoreboard</Link>
+          <Link to="/profile" className="nav-link">Profile</Link>
         </nav>
 
         <div className="auth-buttons">

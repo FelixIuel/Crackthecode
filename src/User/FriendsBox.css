@@ -1,0 +1,121 @@
+.friends-box {
+    grid-column: span 2;
+  }
+  
+  .section {
+    margin-bottom: 20px;
+  }
+  
+  .friend-item,
+  .group-item,
+  .request-item {
+    background: wheat;
+    border: 1px solid black;
+    padding: 6px 10px;
+    margin-top: 5px;
+    font-size: 14px;
+    color: black;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .request-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .request-buttons button {
+    width: 32px;
+    height: 32px;
+    background-color: darkgreen;
+    border: 1px solid black;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  .section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .friend-search {
+    padding: 6px 10px;
+    font-size: 14px;
+    width: 180px;
+    font-family: inherit;
+    background-color: #f7e5ba;
+    color: black;
+    border: 1px solid black;
+    border-radius: 3px;
+  }
+  
+  .group-join,
+  .group-create {
+    display: flex;
+    margin-top: 10px;
+    gap: 8px;
+  }
+  
+  .group-join input,
+  .group-create input {
+    flex: 1;
+    padding: 8px;
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #f7e5ba;
+    border: 1px solid black;
+  }
+  
+  .group-join button,
+  .group-create button {
+    padding: 8px 12px;
+    background-color: #f7e5ba;
+    border: 1px solid black;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: 'Courier New', Courier, monospace;
+    height: 40px;
+  }
+  
+  .group-code-msg {
+    font-size: 13px;
+    margin-top: 8px;
+    color: black;
+  }
+  
+  .dim {
+    color: black;
+    font-style: italic;
+  }
+  
+  /* Button for Send */
+.send-button {
+  padding: 6px 12px;
+  background-color: #f7e5ba;
+  border: 1px solid black;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  height: 40px;
+}
+
+.send-request-button {
+  padding: 6px 12px;
+  background-color: #f7e5ba;
+  border: 1px solid black;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  height: 40px;
+}
+
+.remove-btn {
+  padding: 6px 12px;
+  background-color: #f7e5ba;
+  border: 1px solid black;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  height: 40px;
+}
