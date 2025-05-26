@@ -1,110 +1,137 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import './FriendsBox.css';
 
-const FriendsBox = () => {
+const FriendsBox = ({ onChat }) => {
   const [friends, setFriends] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [groups, setGroups] = useState(["Dark Alley Club"]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
-  const [userFound, setUserFound] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [isSending, setIsSending] = useState(false);
-  const [joinCode, setJoinCode] = useState('');
-  const [newGroupName, setNewGroupName] = useState('');
-  const [groupCode, setGroupCode] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
-  // Function to remove a friend
-  const handleRemoveFriend = (friend) => {
-    setFriends(friends.filter((f) => f !== friend));
-  };
+  useEffect(() => {
+    fetchFriends();
+    fetchRequests();
+  }, []);
 
-  // Function to accept a friend request
-  const handleAccept = (user) => {
-    setFriends([...friends, user]);
-    setRequests(requests.filter((req) => req !== user));
-  };
-
-  // Function to decline a friend request
-  const handleDecline = (user) => {
-    setRequests(requests.filter((req) => req !== user));
-  };
-
-  // Function to search users
-  const handleSearch = () => {
-    if (!searchQuery.trim()) return; // Avoid sending empty search queries
-
-    setStatusMessage('Searching...');
-    
-    fetch(`http://localhost:5000/search-users/${searchQuery}`, {  // Adjust API route as needed
-      method: 'GET',
+  const fetchFriends = () => {
+    fetch('http://localhost:5000/get-friends', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
     })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.users.length > 0) {
-          setSearchResults(data.users);
-          setUserFound(true);
-          setStatusMessage(`${data.users.length} user(s) found.`);
-        } else {
-          setSearchResults([]);
-          setUserFound(false);
-          setStatusMessage('No users found');
-        }
-      })
-      .catch((error) => {
-        console.error("Search failed", error);
-        setStatusMessage("Something went wrong. Try again.");
-      });
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) setFriends(data.friends);
+    });
   };
 
-  // Function to send a friend request
+  const fetchRequests = () => {
+    fetch('http://localhost:5000/friend-requests', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) setRequests(data.friend_requests);
+    });
+  };
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) return;
+    setStatusMessage('Searching...');
+    setShowSearchResults(true);
+
+    fetch(`http://localhost:5000/search-users/${searchQuery}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.users.length > 0) {
+        setSearchResults(data.users);
+        setStatusMessage(`${data.users.length} user(s) found.`);
+      } else {
+        setSearchResults([]);
+        setStatusMessage('No users found');
+      }
+    });
+  };
+
   const handleSendRequest = (username) => {
     setIsSending(true);
     fetch('http://localhost:5000/send-friend-request', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
-      body: JSON.stringify({ username }),
+      body: JSON.stringify({ username })
     })
-      .then(res => res.json())
-      .then(data => {
-        setIsSending(false);
-        if (data.success) {
-          setStatusMessage(`Friend request sent to ${username}`);
-        } else {
-          setStatusMessage(`Failed to send request to ${username}`);
-        }
-      })
-      .catch((error) => {
-        console.error("Request failed", error);
-        setIsSending(false);
-        setStatusMessage("Something went wrong while sending the request.");
-      });
+    .then(res => res.json())
+    .then(data => {
+      setIsSending(false);
+      if (data.success) {
+        setStatusMessage(`Friend request sent to ${username}`);
+        fetchRequests();
+      } else {
+        setStatusMessage(`Failed to send request to ${username}`);
+      }
+    });
   };
 
-  // Function to join a group
-  const handleJoinGroup = () => {
-    if (joinCode.trim()) {
-      setGroups([...groups, `Group ${groups.length + 1}`]);
-      setJoinCode("");
-    }
+  const handleAccept = (username) => {
+    fetch('http://localhost:5000/accept-friend-request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ username })
+    })
+    .then(res => res.json())
+    .then(data => {
+      setStatusMessage(data.message || 'Friend request accepted');
+      fetchFriends();
+      fetchRequests();
+    });
   };
 
-  // Function to create a new group
-  const handleCreateGroup = () => {
-    if (newGroupName.trim()) {
-      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      setGroups([...groups, newGroupName]);
-      setGroupCode(code);
-      setNewGroupName("");
-    }
+  const handleDecline = (username) => {
+    fetch('http://localhost:5000/deny-friend-request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ username })
+    })
+    .then(res => res.json())
+    .then(data => {
+      setStatusMessage(data.message || 'Friend request denied');
+      fetchRequests();
+    });
   };
 
-  // Handle search results
-  const filteredFriends = friends.filter((f) =>
-    f.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleRemoveFriend = (username) => {
+    fetch('http://localhost:5000/remove-friend', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ username })
+    })
+    .then(res => res.json())
+    .then(data => {
+      setStatusMessage(data.message || 'Friend removed');
+      fetchFriends();
+    });
+  };
 
   return (
     <div className="noir-box friends-box">
@@ -112,35 +139,48 @@ const FriendsBox = () => {
         <h2>Connections</h2>
       </div>
 
-      {/* Add Friends Section */}
       <div className="section">
         <div className="section-title">
           <input
             type="text"
-            placeholder="Add friends and send request"
+            placeholder="Search for friends"
             className="friend-search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()} // Trigger search on pressing Enter
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
-          <button 
-            onClick={handleSearch} 
-            disabled={isSending} 
-            className="send-button"
-          >
-            {isSending ? 'Sending...' : 'Send'}
+          <button onClick={handleSearch} disabled={isSending} className="send-button">
+            {isSending ? 'Searching...' : 'Search'}
           </button>
         </div>
 
         <div className="status-message">{statusMessage}</div>
 
-        {userFound && (
+        {showSearchResults && (
           <div className="search-results">
+            <div
+              className="close-search-button"
+              style={{
+                backgroundColor: 'darkred',
+                color: 'white',
+                padding: '4px 10px',
+                cursor: 'pointer',
+                display: 'inline-block',
+                marginBottom: '8px',
+                fontWeight: 'bold',
+                borderRadius: '4px'
+              }}
+              onClick={() => setShowSearchResults(false)}
+            >
+              ✖
+            </div>
             {searchResults.map((user) => (
               <div key={user.username} className="user-item">
-                {user.username}
-                <button 
-                  onClick={() => handleSendRequest(user.username)} 
+                <Link to={`/user/${user.username}`} style={{ marginRight: '10px' }}>
+                  {user.username}
+                </Link>
+                <button
+                  onClick={() => handleSendRequest(user.username)}
                   disabled={isSending}
                   className="send-request-button"
                 >
@@ -152,14 +192,31 @@ const FriendsBox = () => {
         )}
       </div>
 
-      {/* Friends Section */}
       <div className="section">
         <h3>Friends</h3>
-        {filteredFriends.length ? (
-          filteredFriends.map((f) => (
-            <div key={f} className="friend-item">
-              {f}
-              <button onClick={() => handleRemoveFriend(f)} className="remove-btn">Remove</button>
+        {friends.length ? (
+          friends.map((f) => (
+            <div key={f.username} className="friend-item">
+              <div className="friend-info">
+                <Link to={`/user/${f.username}`} style={{ textDecoration: 'none', color: 'black' }}>
+                  <div className="friend-avatar-container">
+                    {f.picture ? (
+                      <img
+                        src={`http://localhost:5000${f.picture}`}
+                        alt="profile"
+                        className="friend-avatar"
+                      />
+                    ) : (
+                      <div className="friend-avatar placeholder">?</div>
+                    )}
+                  </div>
+                  <span>{f.username}</span>
+                </Link>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="chat-btn" onClick={() => onChat(f.username, 'friend')}>Chat</button>
+                <button className="remove-btn" onClick={() => handleRemoveFriend(f.username)}>Remove</button>
+              </div>
             </div>
           ))
         ) : (
@@ -167,51 +224,21 @@ const FriendsBox = () => {
         )}
       </div>
 
-      {/* Requests Section */}
       <div className="section">
         <h3>Requests</h3>
         {requests.length ? (
           requests.map((r) => (
-            <div key={r} className="request-item">
-              {r}
+            <div key={r.username} className="request-item">
+              {r.username}
               <div className="request-buttons">
-                <button onClick={() => handleAccept(r)}>✔</button>
-                <button onClick={() => handleDecline(r)}>✖</button>
+                <button onClick={() => handleAccept(r.username)}>✔</button>
+                <button onClick={() => handleDecline(r.username)}>✖</button>
               </div>
             </div>
           ))
         ) : (
           <p className="dim">No requests</p>
         )}
-      </div>
-
-      {/* Groups Section */}
-      <div className="section">
-        <h3>Groups</h3>
-        {groups.map((g, i) => (
-          <div key={i} className="group-item">{g}</div>
-        ))}
-        <div className="group-join">
-          <input
-            type="text"
-            value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value)}
-            placeholder="Enter group code"
-          />
-          <button onClick={handleJoinGroup}>Join</button>
-        </div>
-        <div className="group-create">
-          <input
-            type="text"
-            value={newGroupName}
-            onChange={(e) => setNewGroupName(e.target.value)}
-            placeholder="New group name"
-          />
-          <button onClick={handleCreateGroup}>Create</button>
-          {groupCode && (
-            <p className="group-code-msg">Your group code: <strong>{groupCode}</strong></p>
-          )}
-        </div>
       </div>
     </div>
   );

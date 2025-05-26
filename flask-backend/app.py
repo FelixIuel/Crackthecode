@@ -18,7 +18,7 @@ load_dotenv()
 
 # ====== Initialize Flask app ======
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "methods": ["GET", "POST", "OPTIONS"]}})
 
 # ====== Config ======
 app.config["MONGO_URI"] = "mongodb://localhost:27017/crackthecode"
@@ -27,6 +27,7 @@ app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "default_dev_secret")
 mongo = PyMongo(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
+
 
 # ====== Serve Uploaded Pictures ======
 @app.route('/static/uploads/<filename>')
@@ -241,100 +242,286 @@ def get_category_puzzles(category):
     except Exception as e:
         return jsonify({"error": "Failed to fetch category puzzles", "details": str(e)}), 500
 
-# ====== FRIENDS ======
+# === FRIEND SYSTEM ===
+
+@app.route('/search-users/<query>', methods=['GET'])
+@jwt_required()
+def search_users(query):
+    current_user = get_jwt_identity()
+    users = mongo.db.users.find({
+        "username": {"$regex": query, "$options": "i"},
+        "username": {"$ne": current_user}
+    }, {"_id": 0, "username": 1, "picture": 1})
+    return jsonify({"success": True, "users": list(users)}), 200
+
 @app.route('/send-friend-request', methods=['POST'])
 @jwt_required()
 def send_friend_request():
     current_user = get_jwt_identity()
-    data = request.json
-    target_user = data.get("username")
-    
-    if not target_user:
-        return jsonify({"success": False, "error": "Target username is required"}), 400
-    
-    if mongo.db.users.find_one({"username": target_user}) is None:
-        return jsonify({"success": False, "error": "User not found"}), 404
+    data = request.get_json()
+    target_username = data.get("username")
 
-    if mongo.db.users.find_one({"username": current_user, "friends.username": target_user}):
-        return jsonify({"success": False, "error": "You are already friends with this user"}), 400
-    
-    if mongo.db.users.find_one({"username": current_user, "sentRequests.username": target_user}):
-        return jsonify({"success": False, "error": "Friend request already sent"}), 400
-    
-    mongo.db.users.update_one({"username": current_user}, {"$push": {"sentRequests": {"username": target_user}}})
-    mongo.db.users.update_one({"username": target_user}, {"$push": {"friendRequests": {"username": current_user}}})
-    
-    return jsonify({"success": True, "message": "Friend request sent"}), 200
+    if target_username == current_user:
+        return jsonify({"success": False, "message": "You can't add yourself"}), 400
+
+    sender = mongo.db.users.find_one({"username": current_user})
+    receiver = mongo.db.users.find_one({"username": target_username})
+
+    if not receiver:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    if target_username in sender.get("sentRequests", []):
+        return jsonify({"success": False, "message": "Request already sent"}), 400
+
+    if current_user in receiver.get("friendRequests", []):
+        return jsonify({"success": False, "message": "Already requested"}), 400
+
+    mongo.db.users.update_one({"username": current_user}, {"$addToSet": {"sentRequests": target_username}})
+    mongo.db.users.update_one({"username": target_username}, {"$addToSet": {"friendRequests": current_user}})
+
+    return jsonify({"success": True, "message": "Request sent"}), 200
 
 @app.route('/friend-requests', methods=['GET'])
 @jwt_required()
 def get_friend_requests():
     current_user = get_jwt_identity()
-    user = mongo.db.users.find_one({"username": current_user}, {"_id": 0, "friendRequests": 1})
-    
-    if not user:
-        return jsonify({"success": False, "error": "User not found"}), 404
-    
-    return jsonify({"success": True, "friend_requests": user.get("friendRequests", [])}), 200
-
-@app.route('/accept-friend-request', methods=['POST'])
-@jwt_required()
-def accept_friend_request():
-    current_user = get_jwt_identity()
-    data = request.json
-    sender = data.get("username")
-    
-    if not sender:
-        return jsonify({"success": False, "error": "Sender username is required"}), 400
-
-    mongo.db.users.update_one({"username": current_user}, {"$push": {"friends": {"username": sender}}})
-    mongo.db.users.update_one({"username": sender}, {"$push": {"friends": {"username": current_user}}})
-
-    mongo.db.users.update_one({"username": current_user}, {"$pull": {"friendRequests": {"username": sender}}})
-    mongo.db.users.update_one({"username": sender}, {"$pull": {"sentRequests": {"username": current_user}}})
-
-    return jsonify({"success": True, "message": "Friend request accepted"}), 200
-
-@app.route('/deny-friend-request', methods=['POST'])
-@jwt_required()
-def deny_friend_request():
-    current_user = get_jwt_identity()
-    data = request.json
-    sender = data.get("username")
-    
-    if not sender:
-        return jsonify({"success": False, "error": "Sender username is required"}), 400
-
-    mongo.db.users.update_one({"username": current_user}, {"$pull": {"friendRequests": {"username": sender}}})
-    mongo.db.users.update_one({"username": sender}, {"$pull": {"sentRequests": {"username": current_user}}})
-
-    return jsonify({"success": True, "message": "Friend request denied"}), 200
+    user = mongo.db.users.find_one({"username": current_user})
+    requests = user.get("friendRequests", [])
+    formatted = list(mongo.db.users.find({"username": {"$in": requests}}, {"_id": 0, "username": 1, "picture": 1}))
+    return jsonify({"success": True, "friend_requests": formatted}), 200
 
 @app.route('/get-friends', methods=['GET'])
 @jwt_required()
 def get_friends():
     current_user = get_jwt_identity()
-    user = mongo.db.users.find_one({"username": current_user}, {"_id": 0, "friends": 1})
+    user = mongo.db.users.find_one({"username": current_user})
+    friends = user.get("friends", [])
+    formatted = list(mongo.db.users.find({"username": {"$in": friends}}, {"_id": 0, "username": 1, "picture": 1}))
+    return jsonify({"success": True, "friends": formatted}), 200
 
-    if not user:
-        return jsonify({"success": False, "error": "User not found"}), 404
-    
-    return jsonify({"success": True, "friends": user.get("friends", [])}), 200
+@app.route('/accept-friend-request', methods=['POST'])
+@jwt_required()
+def accept_friend():
+    current_user = get_jwt_identity()
+    username = request.json.get("username")
+
+    mongo.db.users.update_one({"username": current_user}, {
+        "$pull": {"friendRequests": username},
+        "$addToSet": {"friends": username}
+    })
+
+    mongo.db.users.update_one({"username": username}, {
+        "$pull": {"sentRequests": current_user},
+        "$addToSet": {"friends": current_user}
+    })
+
+    return jsonify({"success": True, "message": "Friend request accepted"}), 200
+
+@app.route('/deny-friend-request', methods=['POST'])
+@jwt_required()
+def deny_friend():
+    current_user = get_jwt_identity()
+    username = request.json.get("username")
+
+    mongo.db.users.update_one({"username": current_user}, {"$pull": {"friendRequests": username}})
+    mongo.db.users.update_one({"username": username}, {"$pull": {"sentRequests": current_user}})
+
+    return jsonify({"success": True, "message": "Friend request denied"}), 200
 
 @app.route('/remove-friend', methods=['POST'])
 @jwt_required()
 def remove_friend():
     current_user = get_jwt_identity()
-    data = request.json
-    friend_username = data.get("username")
-    
-    if not friend_username:
-        return jsonify({"success": False, "error": "Friend's username is required"}), 400
-    
-    mongo.db.users.update_one({"username": current_user}, {"$pull": {"friends": {"username": friend_username}}})
-    mongo.db.users.update_one({"username": friend_username}, {"$pull": {"friends": {"username": current_user}}})
+    username = request.json.get("username")
+
+    mongo.db.users.update_one({"username": current_user}, {"$pull": {"friends": username}})
+    mongo.db.users.update_one({"username": username}, {"$pull": {"friends": current_user}})
 
     return jsonify({"success": True, "message": "Friend removed"}), 200
+
+from flask import request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_bcrypt import Bcrypt
+
+bcrypt = Bcrypt(app)
+
+# ====== GROUP ROUTES ======
+
+@app.route('/create-group', methods=['POST'])
+@jwt_required()
+def create_group():
+    current_user = get_jwt_identity()
+    data = request.get_json()
+    group_name = data.get("name")
+    password = data.get("password")
+
+    if not group_name or not password:
+        return jsonify({"success": False, "error": "Group name and password required"}), 400
+
+    existing = mongo.db.groups.find_one({"name": group_name})
+    if existing:
+        return jsonify({"success": False, "error": "Group name already exists"}), 409
+
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    mongo.db.groups.insert_one({
+        "name": group_name,
+        "password": hashed_password,
+        "members": [current_user],
+        "admin": current_user
+    })
+
+    return jsonify({"success": True, "message": "Group created"}), 201
+
+
+@app.route('/join-group', methods=['POST'])
+@jwt_required()
+def join_group():
+    current_user = get_jwt_identity()
+    data = request.get_json()
+    group_name = data.get("name")
+    password = data.get("password")
+
+    group = mongo.db.groups.find_one({"name": group_name})
+    if not group:
+        return jsonify({"success": False, "error": "Group not found"}), 404
+
+    if not bcrypt.check_password_hash(group["password"], password):
+        return jsonify({"success": False, "error": "Incorrect password"}), 403
+
+    if current_user in group.get("members", []):
+        return jsonify({"success": False, "error": "Already a member"}), 400
+
+    mongo.db.groups.update_one(
+        {"name": group_name},
+        {"$addToSet": {"members": current_user}}
+    )
+
+    return jsonify({"success": True, "message": "Joined group"}), 200
+
+
+@app.route('/remove-member', methods=['POST'])
+@jwt_required()
+def remove_member():
+    current_user = get_jwt_identity()
+    data = request.get_json()
+    group_name = data.get("group")
+    target_user = data.get("username")
+
+    group = mongo.db.groups.find_one({"name": group_name})
+    if not group:
+        return jsonify({"success": False, "error": "Group not found"}), 404
+
+    if group.get("admin") != current_user:
+        return jsonify({"success": False, "error": "Only admin can remove members"}), 403
+
+    mongo.db.groups.update_one(
+        {"name": group_name},
+        {"$pull": {"members": target_user}}
+    )
+
+    return jsonify({"success": True, "message": "Member removed"}), 200
+
+
+@app.route('/search-groups/<query>', methods=['GET'])
+@jwt_required()
+def search_groups(query):
+    groups = mongo.db.groups.find(
+        {"name": {"$regex": query, "$options": "i"}},
+        {"_id": 0, "name": 1}
+    )
+    return jsonify({"success": True, "groups": list(groups)}), 200
+
+
+@app.route('/my-groups', methods=['GET'])
+@jwt_required()
+def my_groups():
+    current_user = get_jwt_identity()
+    groups = list(mongo.db.groups.find(
+        {"members": current_user},
+        {"_id": 0, "name": 1, "admin": 1, "members": 1}
+    ))
+    return jsonify({"success": True, "groups": groups}), 200
+
+@app.route('/group-members/<groupname>', methods=['GET'])
+@jwt_required()
+def get_group_members(groupname):
+    group = mongo.db.groups.find_one({"name": groupname})
+    if not group:
+        return jsonify({"success": False, "error": "Group not found"}), 404
+
+    return jsonify({"success": True, "members": group.get("members", [])}), 200
+
+# ====== CHAT =====
+from flask import request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+
+# GET chat messages
+@app.route('/chat/<chat_type>/<target>', methods=['GET'])
+@jwt_required()
+def get_chat(chat_type, target):
+    current_user = get_jwt_identity()
+    if chat_type not in ['friend', 'group']:
+        return jsonify({"success": False, "error": "Invalid chat type"}), 400
+
+    if chat_type == 'friend':
+        key = sorted([current_user, target])
+        chat = mongo.db.friend_chats.find_one({"participants": key})
+        messages = chat.get('messages', []) if chat else []
+    else:
+        group = mongo.db.groups.find_one({"name": target})
+        if not group or current_user not in group.get('members', []):
+            return jsonify({"success": False, "error": "Access denied"}), 403
+        chat = mongo.db.group_chats.find_one({"group": target})
+        messages = chat.get('messages', []) if chat else []
+
+    return jsonify({"success": True, "messages": messages}), 200
+
+# POST new message
+@app.route('/chat/<chat_type>/<target>', methods=['POST'])
+@jwt_required()
+def post_chat(chat_type, target):
+    current_user = get_jwt_identity()
+    data = request.get_json()
+    message = data.get('message')
+
+    if not message:
+        return jsonify({"success": False, "error": "No message"}), 400
+
+    new_message = {
+        "sender": current_user,
+        "text": message
+    }
+
+    if chat_type == 'friend':
+        key = sorted([current_user, target])
+        chat = mongo.db.friend_chats.find_one({"participants": key})
+        if chat:
+            updated = chat["messages"][-19:] + [new_message] if len(chat["messages"]) >= 20 else chat["messages"] + [new_message]
+            mongo.db.friend_chats.update_one(
+                {"participants": key},
+                {"$set": {"messages": updated}}
+            )
+        else:
+            mongo.db.friend_chats.insert_one({"participants": key, "messages": [new_message]})
+    elif chat_type == 'group':
+        group = mongo.db.groups.find_one({"name": target})
+        if not group or current_user not in group.get('members', []):
+            return jsonify({"success": False, "error": "Access denied"}), 403
+
+        chat = mongo.db.group_chats.find_one({"group": target})
+        if chat:
+            updated = chat["messages"][-19:] + [new_message] if len(chat["messages"]) >= 20 else chat["messages"] + [new_message]
+            mongo.db.group_chats.update_one(
+                {"group": target},
+                {"$set": {"messages": updated}}
+            )
+        else:
+            mongo.db.group_chats.insert_one({"group": target, "messages": [new_message]})
+    else:
+        return jsonify({"success": False, "error": "Invalid chat type"}), 400
+
+    return jsonify({"success": True, "message": "Message sent"}), 200
 
 # ====== FUN STUFF ======
 @app.route('/get-bogus-hint', methods=['GET'])
@@ -350,6 +537,37 @@ def get_random_phone_line():
     if not lines:
         return jsonify({"success": False, "message": "No phone lines found."}), 404
     return jsonify({"success": True, "message": random.choice(lines).get("message", "")})
+
+# ====== OTHER USERS ======
+@app.route('/public-profile/<username>', methods=['GET'])
+@jwt_required()
+def get_public_profile(username):
+    user = mongo.db.users.find_one(
+        {"username": username},
+        {"_id": 0, "password": 0, "sentRequests": 0, "friendRequests": 0}
+    )
+    if not user:
+        return jsonify({"success": False, "error": "User not found"}), 404
+
+    # Get detailed friend info
+    friend_usernames = user.get("friends", [])
+    friends = list(mongo.db.users.find(
+        {"username": {"$in": friend_usernames}},
+        {"_id": 0, "username": 1, "picture": 1}
+    ))
+
+    # Get group names
+    groups = list(mongo.db.groups.find(
+        {"members": username},
+        {"_id": 0, "name": 1}
+    ))
+
+    user["friends"] = friends
+    user["groups"] = [g["name"] for g in groups]
+
+    return jsonify({"success": True, "user": user}), 200
+
+
 
 # ====== START ======
 if __name__ == '__main__':

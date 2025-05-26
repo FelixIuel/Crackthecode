@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-
 import GamePage from './GamePage';
 import ExplanationPage from './ExplanationPage';
 import ScoreboardPage from './ScoreboardPage';
 import DailyPuzzlePage from './DailyPuzzlePage';
 import CategoriesPage from './CategoriesPage';
 import UserPage from './User/UserPage';
+import ChatWindow from './User/ChatWindow';
 import Header from './Header';
+import PublicUserPage from './User/PublicUserPage';
 
 import angryImage from './assets/pictures/general/fullscreen-warning.png';
 
@@ -93,6 +94,7 @@ function App() {
             />
           } />
           <Route path="/explanation" element={<ExplanationPage />} />
+          <Route path="/chat" element={<ChatWindow />} />
           <Route path="/scoreboard" element={
             <ScoreboardPage
               onLoginClick={() => {
@@ -120,6 +122,7 @@ function App() {
             />
           } />
           <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/user/:username" element={<PublicUserPage />} />
           <Route path="/profile" element={
             <UserPage
               onLoginClick={() => {

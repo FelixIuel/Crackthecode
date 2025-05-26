@@ -1,0 +1,85 @@
+.chat-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 400px;
+  height: 500px;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border: 2px solid black;
+  z-index: 1000;
+  box-shadow: 5px 5px 12px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 15px;
+  background-color: white;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.chat-header h3 {
+  margin: 0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 16px;
+}
+
+.close-btn {
+  background-color: #d9534f;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.chat-messages {
+  flex-grow: 1;
+  overflow-y: auto;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  padding: 10px 0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+}
+
+.chat-message {
+  margin-bottom: 10px;
+}
+
+.chat-input-area {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.chat-input-area input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #aaa;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.chat-input-area button {
+  padding: 8px 12px;
+  background-color: #f7e5ba;
+  border: 1px solid black;
+  font-family: 'Courier New', Courier, monospace;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.chat-input-area button:hover {
+  background-color: #e2c17f;
+}
