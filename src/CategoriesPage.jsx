@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import CategoriesPuzzle from "./CategoriesPuzzle";
 
 import backgroundImg from "./assets/pictures/gamepage/GamePage-Background.png";
@@ -27,6 +27,27 @@ function CategoriesPage({ onLoginClick, onSignupClick, isLoggedIn }) {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("DOTA");
+  const [clearedCategories, setClearedCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchStamps = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/user-profile", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.user.stamps)) {
+          setClearedCategories(data.user.stamps);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user stamps:", err);
+      }
+    };
+
+    fetchStamps();
+  }, []);
 
   const toggleMusic = () => {
     const audio = audioRef.current;
@@ -50,13 +71,12 @@ function CategoriesPage({ onLoginClick, onSignupClick, isLoggedIn }) {
         backgroundRepeat: "no-repeat",
         minHeight: "100vh",
         paddingTop: "80px",
-        paddingBottom: "40px", // <-- changed
-        position: "relative", // <-- important
+        paddingBottom: "40px",
+        position: "relative",
         overflowX: "hidden",
         overflowY: "auto",
       }}
     >
-      {/* Music toggle */}
       <div
         onClick={toggleMusic}
         style={{
@@ -86,13 +106,11 @@ function CategoriesPage({ onLoginClick, onSignupClick, isLoggedIn }) {
         />
       </div>
 
-      {/* Audio */}
       <audio ref={audioRef} loop>
         <source src={gameTheme} type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
 
-      {/* CATEGORY STAMPS */}
       <div className="categories-wrapper">
         <h2 className="categories-title">Categories</h2>
         <div className="categories-stamps">
@@ -101,7 +119,7 @@ function CategoriesPage({ onLoginClick, onSignupClick, isLoggedIn }) {
               key={cat.name}
               className={`category-stamp ${
                 selectedCategory === cat.name ? "selected" : ""
-              }`}
+              } ${clearedCategories.includes(cat.name) ? "cleared" : ""}`}
               onClick={() => setSelectedCategory(cat.name)}
             >
               <img src={cat.image} alt={cat.name} />
@@ -111,7 +129,6 @@ function CategoriesPage({ onLoginClick, onSignupClick, isLoggedIn }) {
         </div>
       </div>
 
-      {/* PUZZLE */}
       <div className="container">
         <CategoriesPuzzle selectedCategory={selectedCategory} />
       </div>

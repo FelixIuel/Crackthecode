@@ -89,7 +89,6 @@
     font-style: italic;
   }
   
-  /* Button for Send */
 .send-button {
   padding: 6px 12px;
   background-color: #f7e5ba;
@@ -259,12 +258,12 @@
 }
 
 .chat-btn {
-  margin-right: 8px; /* Adjusting space between Chat and Remove buttons */
+  margin-right: 8px;
 }
 
 .chat-btn:hover,
 .remove-btn:hover {
-  background-color: #e2c17f; /* Slightly darken on hover */
+  background-color: #e2c17f;
 }
 
 .chat-icon {
@@ -289,7 +288,6 @@
   font-style: italic;
 }
 
-/* Search and button styling */
 .friend-search,
 .send-button,
 .send-request-button {

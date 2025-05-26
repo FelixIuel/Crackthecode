@@ -85,3 +85,8 @@ html, body {
   font-weight: bold;
   cursor: pointer;
 }
+
+.category-stamp.selected,
+.category-stamp.cleared {
+  filter: none;
+}

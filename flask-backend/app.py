@@ -5,9 +5,10 @@ from flask_jwt_extended import (
     JWTManager, create_access_token, jwt_required, get_jwt_identity
 )
 from flask_cors import CORS
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
+from apscheduler.schedulers.background import BackgroundScheduler
 import os
 import random
 import requests
@@ -205,8 +206,50 @@ def get_daily_puzzle():
     else:
         doc = existing_puzzle
 
-    mongo.db.daily_attempts.insert_one({"username": current_user, "date": today})
     return jsonify(doc)
+
+@app.route('/complete-daily-puzzle', methods=['POST'])
+@jwt_required()
+def complete_daily_puzzle():
+    current_user = get_jwt_identity()
+    today = datetime.utcnow().strftime('%Y-%m-%d')
+
+    # Already completed?
+    if mongo.db.daily_attempts.find_one({"username": current_user, "date": today}):
+        return jsonify({"success": False, "message": "Already completed"}), 400
+
+    # Add daily attempt
+    mongo.db.daily_attempts.insert_one({"username": current_user, "date": today})
+
+    # Get yesterday’s date
+    yesterday = (datetime.utcnow() - timedelta(days=1)).strftime('%Y-%m-%d')
+    played_yesterday = mongo.db.daily_attempts.find_one({
+        "username": current_user,
+        "date": yesterday
+    })
+
+    # Fetch current streak
+    user = mongo.db.users.find_one({"username": current_user})
+    current = user.get("streak", {}).get("current", 0)
+    longest = user.get("streak", {}).get("longest", 0)
+
+    # Increment or reset current streak
+    if played_yesterday:
+        current += 1
+    else:
+        current = 1
+
+    if current > longest:
+        longest = current
+
+    mongo.db.users.update_one({"username": current_user}, {
+        "$set": {
+            "streak.current": current,
+            "streak.longest": longest
+        }
+    })
+
+    return jsonify({"success": True, "current": current, "longest": longest}), 200
 
 # ====== ENDLESS GAME PUZZLES ======
 @app.route('/get-puzzle', methods=['GET'])
@@ -567,6 +610,39 @@ def get_public_profile(username):
 
     return jsonify({"success": True, "user": user}), 200
 
+# ====== CHECK STREAK ======
+def reset_streaks():
+    yesterday = (datetime.utcnow() - timedelta(days=1)).strftime('%Y-%m-%d')
+    users = mongo.db.users.find()
+    for user in users:
+        username = user["username"]
+        played = mongo.db.daily_attempts.find_one({"username": username, "date": yesterday})
+        if not played:
+            mongo.db.users.update_one({"username": username}, {
+                "$set": {"streak.current": 0}
+            })
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=reset_streaks, trigger="cron", hour=0, minute=5)  # Run every day at 00:05 UTC
+scheduler.start()
+
+# ======= Stamps ======
+@app.route('/complete-category', methods=['POST'])
+@jwt_required()
+def complete_category():
+    current_user = get_jwt_identity()
+    data = request.get_json()
+    category = data.get("category")
+
+    if not category:
+        return jsonify({"success": False, "error": "Missing category"}), 400
+
+    mongo.db.users.update_one(
+        {"username": current_user},
+        {"$addToSet": {"stamps": category}}
+    )
+
+    return jsonify({"success": True, "message": f"Category '{category}' recorded"}), 200
 
 
 # ====== START ======

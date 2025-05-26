@@ -19,7 +19,23 @@ const StampsBox = () => {
   const [clearedCategories, setClearedCategories] = useState([]);
 
   useEffect(() => {
-    setClearedCategories(["DOTA", "SCIENCE"]);
+    const fetchStamps = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/user-profile", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.user.stamps)) {
+          setClearedCategories(data.user.stamps);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user stamps:", err);
+      }
+    };
+
+    fetchStamps();
   }, []);
 
   return (

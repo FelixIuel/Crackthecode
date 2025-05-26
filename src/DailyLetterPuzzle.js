@@ -25,10 +25,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
     const fetchDailyPuzzle = async () => {
       const token = localStorage.getItem("token");
 
-      if (!token || token.trim() === "" || token === "undefined" || token === "null") {
-        console.error("No valid token found. Cannot fetch daily puzzle.");
-        return;
-      }
+      if (!token || token.trim() === "" || token === "undefined" || token === "null") return;
 
       try {
         const response = await fetch("http://127.0.0.1:5000/daily-puzzle", {
@@ -39,7 +36,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
 
         if (data.error) {
           if (data.error === "Already played today") {
-            setTimeout(() => setShowBlackScreen(true), 500); // tiny smooth delay
+            setTimeout(() => setShowBlackScreen(true), 500);
             setAlreadyPlayed(true);
           }
           return;
@@ -73,6 +70,37 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
     fetchDailyPuzzle();
   }, []);
 
+  useEffect(() => {
+    const completePuzzle = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://127.0.0.1:5000/complete-daily-puzzle", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        });
+        const data = await res.json();
+        if (data.success) {
+          const profileRes = await fetch("http://127.0.0.1:5000/user-profile", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const profileData = await profileRes.json();
+          if (profileData.success && profileData.user.streak) {
+            localStorage.setItem("userStreak", JSON.stringify(profileData.user.streak));
+          }
+        }
+      } catch (err) {
+        console.error("Error completing puzzle:", err);
+      }
+    };
+
+    if (isCorrect) {
+      completePuzzle();
+    }
+  }, [isCorrect]);
+
   const correctLetters = sentence.replace(/[^a-zA-Z]/g, "").split("");
   const words = sentence.split(" ");
 
@@ -105,7 +133,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
       setLives(prev => {
         const updated = Math.max(prev - 1, 0);
         if (updated === 0) {
-          setTimeout(() => setShowBlackScreen(true), 500); // tiny delay before black screen
+          setTimeout(() => setShowBlackScreen(true), 500);
           setLostGame(true);
         }
         return updated;
@@ -181,7 +209,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
       </div>
     );
   }
-  
+
   return (
     <div className="game-wrapper">
       <div className="game-area">

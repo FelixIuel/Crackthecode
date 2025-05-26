@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './CategoriesPage.css';
 import hintCharacter from './assets/pictures/gamepage/hint-character.png';
-import parchmentImage from './assets/pictures/general/parchment-bg.png'; // Make sure this path is correct
+import parchmentImage from './assets/pictures/general/parchment-bg.png';
 
 const getRandomNumbers = (word) => {
   const numbers = {};
@@ -37,7 +37,6 @@ const CategoriesPuzzle = ({ selectedCategory }) => {
   const inputRefs = useRef([]);
   const timeoutRefs = useRef({});
 
-  // Fetch puzzles for selected category from backend
   useEffect(() => {
     if (!selectedCategory) return;
 
@@ -57,7 +56,6 @@ const CategoriesPuzzle = ({ selectedCategory }) => {
       });
   }, [selectedCategory]);
 
-  // Load current sentence
   useEffect(() => {
     if (sentences.length === 0) return;
 
@@ -114,6 +112,15 @@ const CategoriesPuzzle = ({ selectedCategory }) => {
             setTimeout(() => {
               setPopupMessage(categoryMessages[selectedCategory] || "Category complete!");
               setShowPopup(true);
+
+              fetch("http://127.0.0.1:5000/complete-category", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${localStorage.getItem("token")}`
+                },
+                body: JSON.stringify({ category: selectedCategory })
+              });
             }, 1000);
           }
         }
@@ -186,10 +193,6 @@ const CategoriesPuzzle = ({ selectedCategory }) => {
                         onChange={e => handleChange(currentLetterIndex, e.target.value)}
                       />
                       <span className="number-label">{letterMapping[char.toLowerCase()] || ''}</span>
-                      {userInput[currentLetterIndex] &&
-                        userInput[currentLetterIndex].toLowerCase() !== correctLetters[currentLetterIndex]?.toLowerCase() && (
-                          <span className="error-text">Wrong!</span>
-                        )}
                     </div>
                   ) : null;
                 })}
@@ -213,7 +216,6 @@ const CategoriesPuzzle = ({ selectedCategory }) => {
         <div className="hint-text">Ask me</div>
       </div>
 
-      {/* 🧾 Styled Completion Popup */}
       {showPopup && (
         <div
           className="popup-message"

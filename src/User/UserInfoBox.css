@@ -28,7 +28,6 @@
     margin: 4px 0;
   }
   
-  /* About box in preview mode */
   .about-static-box {
     background-color: #f7e5ba;
     border: 1px solid black;
@@ -41,7 +40,6 @@
     margin-top: 8px;
   }
   
-  /* About box in edit mode */
   .about-textarea {
     width: 100%;
     min-height: 80px;
@@ -55,7 +53,6 @@
     margin-top: 8px;
   }
   
-  /* Character counter */
   .char-counter {
     font-size: 12px;
     text-align: right;
