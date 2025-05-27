@@ -1,4 +1,41 @@
 # CrackTheCode
+CrackTheCode is a web puzzle game where players test their logic and deduction skills by decoding a hidden sentence. Each letter in the sentence is masked behind a box with a corresponding number, and players must figure out which numbers map to which letters. To assist, a theme and a clue are provided with every puzzle.
+
+The game offers a clean and interactive UI built with React, a secure and efficient backend with Flask, and persistent data handling using MongoDB.
+
+## Game Objective
+
+Uncover the secret sentence by guessing the correct letter for each number-coded box. Use the theme and hint provided to make strategic deductions.
+
+## Game Modes
+
+1. Endless Run  
+   Figure out as many sentences as possible before running out of lives. Track your score on the Scoreboard tab.
+
+2. Daily Sentence  
+   A new sentence appears each day from the ZenQuotes API. Track your daily streak and highest score on your profile page.
+
+3. Categories  
+   Complete all sentences in a category to unlock a unique stamp.
+
+## Page Layout
+
+- Play
+  - Endless Run
+  - Daily Sentence
+  - Categories
+
+- How to Play
+
+- Scoreboard
+
+- Profile
+
+## Extra Features
+
+- Customize your profile
+- Add friends, join groups, and chat
+"""
 
 A full-stack code-breaking web game built with React (frontend) and Flask (backend), using MongoDB for data storage.
 
