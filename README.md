@@ -35,7 +35,8 @@ Uncover the secret sentence by guessing the correct letter for each number-coded
 
 - Customize your profile
 - Add friends, join groups, and chat
-"""
+
+---
 
 A full-stack code-breaking web game built with React (frontend) and Flask (backend), using MongoDB for data storage.
 
