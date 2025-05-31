@@ -1,3 +1,7 @@
+// This scritp renders the Daily Puzzle page for the game. 
+// It shows a login/signup prompt if the user is not logged in, 
+// and the daily puzzle game with background music controls if they are logged in.
+
 import React, { useRef, useState } from "react";
 import DailyLetterPuzzle from "./DailyLetterPuzzle";
 
@@ -9,9 +13,12 @@ import gameTheme from "./assets/sounds/gamepage/game-theme.mp3";
 import detectiveImage from "./assets/pictures/general/Daily-sentence-Picture.png";
 
 function DailyPuzzlePage({ onLoginClick, onSignupClick, isLoggedIn }) {
+  // Reference to the audio element for controlling playback
   const audioRef = useRef(null);
+  // State to track if the music is playing
   const [isPlaying, setIsPlaying] = useState(false);
 
+  // Handles toggling the background music on/off
   const toggleMusic = () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -25,6 +32,7 @@ function DailyPuzzlePage({ onLoginClick, onSignupClick, isLoggedIn }) {
     setIsPlaying(!isPlaying);
   };
 
+  // If the user is not logged in, show a prompt to log in or sign up
   if (!isLoggedIn) {
     return (
       <div
@@ -85,6 +93,7 @@ function DailyPuzzlePage({ onLoginClick, onSignupClick, isLoggedIn }) {
     );
   }
 
+  // If the user is logged in, show the game page with music controls and the puzzle
   return (
     <div
       style={{
@@ -101,7 +110,7 @@ function DailyPuzzlePage({ onLoginClick, onSignupClick, isLoggedIn }) {
         height: "100vh",
       }}
     >
-      {/* Music toggle */}
+      {/* Music toggle button in the bottom right corner */}
       <div
         onClick={toggleMusic}
         style={{
@@ -131,12 +140,13 @@ function DailyPuzzlePage({ onLoginClick, onSignupClick, isLoggedIn }) {
         />
       </div>
 
-      {/* Audio */}
+      {/* Audio element for background music */}
       <audio ref={audioRef} loop>
         <source src={gameTheme} type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
 
+      {/* Main puzzle container */}
       <div className="container">
         <DailyLetterPuzzle
           onLoginClick={onLoginClick}

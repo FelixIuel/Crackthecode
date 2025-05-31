@@ -1,21 +1,30 @@
+// FriendsBox.js
+// This component handles friend management: searching users, sending/accepting/declining friend requests, removing friends, and launching chats.
+// Used in Userpage.js
+
+
+// imports
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import './FriendsBox.css';
 
+// Main FriendsBox component
 const FriendsBox = ({ onChat }) => {
-  const [friends, setFriends] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusMessage, setStatusMessage] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSending, setIsSending] = useState(false);
-  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [friends, setFriends] = useState([]); // List of current friends
+  const [requests, setRequests] = useState([]); // Incoming friend requests
+  const [searchQuery, setSearchQuery] = useState(''); // Search input value
+  const [statusMessage, setStatusMessage] = useState(''); // Status/info messages
+  const [searchResults, setSearchResults] = useState([]); // Results from user search
+  const [isSending, setIsSending] = useState(false); // Loading state for sending/searching
+  const [showSearchResults, setShowSearchResults] = useState(false); // Toggle search results display
 
+  // Fetch friends and requests on mount
   useEffect(() => {
     fetchFriends();
     fetchRequests();
   }, []);
 
+  // Fetch current friends from backend
   const fetchFriends = () => {
     fetch('http://localhost:5000/get-friends', {
       headers: {
@@ -28,6 +37,7 @@ const FriendsBox = ({ onChat }) => {
     });
   };
 
+  // Fetch incoming friend requests from backend
   const fetchRequests = () => {
     fetch('http://localhost:5000/friend-requests', {
       headers: {
@@ -40,6 +50,7 @@ const FriendsBox = ({ onChat }) => {
     });
   };
 
+  // Handle searching for users
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
     setStatusMessage('Searching...');
@@ -57,12 +68,14 @@ const FriendsBox = ({ onChat }) => {
         setStatusMessage(`${data.users.length} user(s) found.`);
       } else {
         setSearchResults([]);
-        setStatusMessage('No users found');
+        setStatusMessage(`Oops, couldn't find anyone by that name.`);
       }
     });
   };
 
+  // Send a friend request to a user
   const handleSendRequest = (username) => {
+    console.log("Sending friend request to:", username); // DEBUG
     setIsSending(true);
     fetch('http://localhost:5000/send-friend-request', {
       method: 'POST',
@@ -77,13 +90,14 @@ const FriendsBox = ({ onChat }) => {
       setIsSending(false);
       if (data.success) {
         setStatusMessage(`Friend request sent to ${username}`);
-        fetchRequests();
+        fetchRequests(); // Refresh requests list
       } else {
         setStatusMessage(`Failed to send request to ${username}`);
       }
     });
   };
 
+  // Accept a friend request
   const handleAccept = (username) => {
     fetch('http://localhost:5000/accept-friend-request', {
       method: 'POST',
@@ -101,6 +115,7 @@ const FriendsBox = ({ onChat }) => {
     });
   };
 
+  // Decline a friend request
   const handleDecline = (username) => {
     fetch('http://localhost:5000/deny-friend-request', {
       method: 'POST',
@@ -117,6 +132,7 @@ const FriendsBox = ({ onChat }) => {
     });
   };
 
+  // Remove a friend from friend list
   const handleRemoveFriend = (username) => {
     fetch('http://localhost:5000/remove-friend', {
       method: 'POST',
@@ -133,12 +149,15 @@ const FriendsBox = ({ onChat }) => {
     });
   };
 
+  // Render component
   return (
     <div className="noir-box friends-box">
+      {/* Header */}
       <div className="section-header">
         <h2>Connections</h2>
       </div>
 
+      {/* Search Bar Section */}
       <div className="section">
         <div className="section-title">
           <input
@@ -154,26 +173,20 @@ const FriendsBox = ({ onChat }) => {
           </button>
         </div>
 
+        {/* Status message for search */}
         <div className="status-message">{statusMessage}</div>
 
+        {/* Search Results List */}
         {showSearchResults && (
           <div className="search-results">
+            {/* Close search results */}
             <div
               className="close-search-button"
-              style={{
-                backgroundColor: 'darkred',
-                color: 'white',
-                padding: '4px 10px',
-                cursor: 'pointer',
-                display: 'inline-block',
-                marginBottom: '8px',
-                fontWeight: 'bold',
-                borderRadius: '4px'
-              }}
               onClick={() => setShowSearchResults(false)}
             >
               ✖
             </div>
+            {/* List of found users */}
             {searchResults.map((user) => (
               <div key={user.username} className="user-item">
                 <Link to={`/user/${user.username}`} style={{ marginRight: '10px' }}>
@@ -192,6 +205,7 @@ const FriendsBox = ({ onChat }) => {
         )}
       </div>
 
+      {/* Friend List Section */}
       <div className="section">
         <h3>Friends</h3>
         {friends.length ? (
@@ -199,22 +213,24 @@ const FriendsBox = ({ onChat }) => {
             <div key={f.username} className="friend-item">
               <div className="friend-info">
                 <Link to={`/user/${f.username}`} style={{ textDecoration: 'none', color: 'black' }}>
-                  <div className="friend-avatar-container">
+                  <div className="friend-profilepic-container">
                     {f.picture ? (
                       <img
                         src={`http://localhost:5000${f.picture}`}
                         alt="profile"
-                        className="friend-avatar"
+                        className="friend-profilepic"
                       />
                     ) : (
-                      <div className="friend-avatar placeholder">?</div>
+                      <div className="friend-profilepic placeholder">?</div>
                     )}
                   </div>
                   <span>{f.username}</span>
                 </Link>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
+                {/* Launch chat with friend */}
                 <button className="chat-btn" onClick={() => onChat(f.username, 'friend')}>Chat</button>
+                {/* Remove friend */}
                 <button className="remove-btn" onClick={() => handleRemoveFriend(f.username)}>Remove</button>
               </div>
             </div>
@@ -224,6 +240,7 @@ const FriendsBox = ({ onChat }) => {
         )}
       </div>
 
+      {/* Friend Requests Section */}
       <div className="section">
         <h3>Requests</h3>
         {requests.length ? (
@@ -231,7 +248,9 @@ const FriendsBox = ({ onChat }) => {
             <div key={r.username} className="request-item">
               {r.username}
               <div className="request-buttons">
+                {/* Accept friend request */}
                 <button onClick={() => handleAccept(r.username)}>✔</button>
+                {/* Decline friend request */}
                 <button onClick={() => handleDecline(r.username)}>✖</button>
               </div>
             </div>

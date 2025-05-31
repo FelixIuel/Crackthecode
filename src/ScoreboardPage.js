@@ -15,9 +15,9 @@ const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
   const [myPage, setMyPage] = useState(0);
   const [topPage, setTopPage] = useState(0);
   const [scoresPerPage, setScoresPerPage] = useState(30);
+  const [loadError, setLoadError] = useState(false);
   const audio = new Audio(pageTurnSound);
 
-  // Fetch scores when page loads or login status changes
   useEffect(() => {
     fetch("http://127.0.0.1:5000/get-highscores")
       .then((res) => res.json())
@@ -35,13 +35,19 @@ const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
           if (data.success) {
             const sorted = [...data.scores].sort((a, b) => b.score - a.score);
             setMyScores(sorted);
+            setLoadError(false);
           } else {
             setMyScores([]);
+            setLoadError(true);
           }
         })
-        .catch(() => setMyScores([]));
+        .catch(() => {
+          setMyScores([]);
+          setLoadError(true);
+        });
     } else {
       setMyScores([]);
+      setLoadError(false);
     }
   }, [isLoggedIn]);
 
@@ -85,6 +91,11 @@ const ScoreboardPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
             {isLoggedIn ? (
               <>
                 <div className="score-header"><h1>My Scores</h1></div>
+                {loadError && (
+                  <div className="error-message" style={{ color: "red", margin: "16px 0" }}>
+                    Could not load your scores. Try logging out and in again.
+                  </div>
+                )}
                 <div className="score-list">
                   {myPaginated.map((entry, index) => {
                     const realIndex = myPage * scoresPerPage + index;

@@ -1,12 +1,18 @@
+//this script is responsible for displaying the stamps the user has collected in the game.
+//it is used in UserPage.js
+
+// imports
 import React, { useEffect, useState } from "react";
 import "./StampsBox.css";
 
+// Importing stamp images!
 import stampDota from '../assets/pictures/stamps/STAMP - DOTA.png';
 import stampEarth from '../assets/pictures/stamps/STAMP - EARTH.png';
 import stampLorum from '../assets/pictures/stamps/STAMP - LORUM IPSUM.png';
 import stampMedsoe from '../assets/pictures/stamps/STAMP - MEDSOE.png';
 import stampScience from '../assets/pictures/stamps/STAMP - SCIENCE.png';
 
+// All possible stamp categories.
 const allCategories = [
   { name: "DOTA", image: stampDota },
   { name: "EARTH", image: stampEarth },
@@ -16,9 +22,11 @@ const allCategories = [
 ];
 
 const StampsBox = () => {
+  // Holds the categories the user has cleared
   const [clearedCategories, setClearedCategories] = useState([]);
 
   useEffect(() => {
+    // Fetch the user's collected stamps from the backend
     const fetchStamps = async () => {
       try {
         const res = await fetch("http://localhost:5000/user-profile", {
@@ -27,6 +35,7 @@ const StampsBox = () => {
           },
         });
         const data = await res.json();
+        // If the fetch is successful, and we can go home early
         if (data.success && Array.isArray(data.user.stamps)) {
           setClearedCategories(data.user.stamps);
         }
@@ -47,6 +56,7 @@ const StampsBox = () => {
             <img
               src={cat.image}
               alt={cat.name}
+              // If the user has cleared the category, show the stamp as active. Otherwise, it's just grey.
               className={`stamp-image ${clearedCategories.includes(cat.name) ? "active" : "inactive"}`}
             />
             <div className="stamp-label">{cat.name}</div>

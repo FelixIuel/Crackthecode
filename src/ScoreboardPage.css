@@ -147,7 +147,6 @@
   cursor: pointer;
 }
 
-/* Fix for large screens */
 @media (min-width: 1800px) {
   .score-column.right {
     padding-left: 250px;
@@ -159,7 +158,6 @@
   }
 }
 
-/* Image handling */
 img {
   -webkit-user-drag: none;
   user-select: none;

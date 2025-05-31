@@ -1,3 +1,16 @@
+## This is the main Flask backend for the CrackTheCode game.
+## It handles user authentication, profile management, game scores, daily puzzles, endless puzzles, and a friend system.
+## To run it, first ensure you have Flask, Flask-PyMongo, Flask-Bcrypt, Flask-JWT-Extended, and other dependencies installed.
+## Then run this script with Python this is how:
+## if you dont have the dependencies installed, run the following commands: pip install -r requirements.txt
+## then run the following commands:
+## cd flask-backend
+## venv\Scripts\activate
+## Python app.py
+## it is runs it show "Starting Flask app on http://127.0.0.1:5000"
+## lastly you need to have MongoDB running on your local machine or change the connection string in the code to point to your MongoDB instance.
+
+# Flask Backend for CrackTheCode Game
 from flask import Flask, jsonify, request, send_from_directory
 from flask_pymongo import PyMongo
 from flask_bcrypt import Bcrypt
@@ -14,14 +27,14 @@ import random
 import requests
 import re
 
-# ====== Load environment variables ======
+# Load environment variables from .env file (for secrets, configs, etc.)
 load_dotenv()
 
-# ====== Initialize Flask app ======
+# Set up the Flask app and enable CORS for frontend communication
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "methods": ["GET", "POST", "OPTIONS"]}})
 
-# ====== Config ======
+# MongoDB and JWT configuration
 app.config["MONGO_URI"] = "mongodb://localhost:27017/crackthecode"
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "default_dev_secret")
 
@@ -29,18 +42,19 @@ mongo = PyMongo(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
-
-# ====== Serve Uploaded Pictures ======
+# Serve uploaded profile pictures from the uploads folder
 @app.route('/static/uploads/<filename>')
 def serve_upload(filename):
     return send_from_directory('static/uploads', filename)
 
-# ====== ROOT ======
+# Simple health check route to see if backend is running
 @app.route('/')
 def home():
-    return "✅ Flask backend is running!"
+    return "Flask backend is running!"
 
-# ====== AUTH ======
+## User Authentication - lets users sign up, log in, and manage their profiles with JWT tokens
+
+# Register a new user
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.json
@@ -62,6 +76,7 @@ def signup():
     })
     return jsonify({"success": True, "message": "User created"}), 201
 
+# Log in and get a JWT token
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
@@ -73,13 +88,16 @@ def login():
     token = create_access_token(identity=username)
     return jsonify({"success": True, "access_token": token}), 200
 
-# ====== PROFILE ======
+## User Profile - management and profile picture handling so the profile looks nice
+
+# Get the current user's username (for quick checks)
 @app.route('/profile', methods=['GET'])
 @jwt_required()
 def profile():
     current_user = get_jwt_identity()
     return jsonify({"success": True, "user": current_user}), 200
 
+# Get the full profile of the logged-in user (excluding sensitive info)
 @app.route('/user-profile', methods=['GET'])
 @jwt_required()
 def get_user_profile():
@@ -89,6 +107,7 @@ def get_user_profile():
         return jsonify({"success": False, "error": "User not found"}), 404
     return jsonify({"success": True, "user": user}), 200
 
+# Update the "about" section of the user's profile
 @app.route('/update-profile', methods=['POST'])
 @jwt_required()
 def update_profile():
@@ -99,6 +118,7 @@ def update_profile():
     mongo.db.users.update_one({"username": current_user}, {"$set": {"about": about}})
     return jsonify({"success": True}), 200
 
+# Upload or replace the user's profile picture
 @app.route('/upload-picture', methods=['POST'])
 @jwt_required()
 def upload_picture():
@@ -107,15 +127,14 @@ def upload_picture():
     if not picture_file:
         return jsonify({"success": False, "error": "No picture uploaded"}), 400
 
-    # Remove old picture if it exists
     user = mongo.db.users.find_one({"username": current_user})
+    # Remove old picture if it exists. to reduce storage usage, since my server is not infinite in space
     if user and user.get("picture"):
         old_filename = user["picture"].replace("/static/uploads/", "")
         old_path = os.path.join("static", "uploads", old_filename)
         if os.path.exists(old_path):
             os.remove(old_path)
 
-    # Save new picture
     upload_dir = os.path.join("static", "uploads")
     os.makedirs(upload_dir, exist_ok=True)
     filename = secure_filename(f"{current_user}_{picture_file.filename}")
@@ -126,7 +145,9 @@ def upload_picture():
     mongo.db.users.update_one({"username": current_user}, {"$set": {"picture": image_url}})
     return jsonify({"success": True, "picture": image_url}), 200
 
-# ====== SCORES ======
+## Score Handling
+
+# Submit a new game score for the current user
 @app.route('/submit-score', methods=['POST'])
 @jwt_required()
 def submit_score():
@@ -146,6 +167,7 @@ def submit_score():
     })
     return jsonify({"success": True, "message": "Score submitted"}), 200
 
+# Get the top 250 high scores (best score per user)
 @app.route('/get-highscores', methods=['GET'])
 def get_highscores():
     scores = list(mongo.db.scores.aggregate([
@@ -161,6 +183,7 @@ def get_highscores():
         {"username": s["_id"], "score": s["best_score"], "timestamp": s["timestamp"]} for s in scores
     ]})
 
+# Get all scores for the current user, sorted by score
 @app.route('/my-scores', methods=['GET'])
 @jwt_required()
 def get_my_scores():
@@ -170,17 +193,21 @@ def get_my_scores():
         {"score": s["score"], "timestamp": s.get("timestamp", "")} for s in scores
     ]})
 
-# ====== DAILY PUZZLE ======
+## Daily Puzzle System
+
+# Get today's daily puzzle (generates one if not already created)
 @app.route('/daily-puzzle', methods=['GET'])
 @jwt_required()
 def get_daily_puzzle():
     current_user = get_jwt_identity()
     today = datetime.utcnow().strftime('%Y-%m-%d')
 
+    # Check if user already played today
     existing_attempt = mongo.db.daily_attempts.find_one({"username": current_user, "date": today})
     if existing_attempt:
         return jsonify({"error": "Already played today"}), 403
 
+    # Generate a new daily puzzle if there isn't one for today
     existing_puzzle = mongo.db.daily_sentence.find_one({"date": today})
     if not existing_puzzle:
         try:
@@ -208,32 +235,28 @@ def get_daily_puzzle():
 
     return jsonify(doc)
 
+# Mark the daily puzzle as completed for the user and update streaks
 @app.route('/complete-daily-puzzle', methods=['POST'])
 @jwt_required()
 def complete_daily_puzzle():
     current_user = get_jwt_identity()
     today = datetime.utcnow().strftime('%Y-%m-%d')
 
-    # Already completed?
     if mongo.db.daily_attempts.find_one({"username": current_user, "date": today}):
         return jsonify({"success": False, "message": "Already completed"}), 400
 
-    # Add daily attempt
     mongo.db.daily_attempts.insert_one({"username": current_user, "date": today})
 
-    # Get yesterday’s date
     yesterday = (datetime.utcnow() - timedelta(days=1)).strftime('%Y-%m-%d')
     played_yesterday = mongo.db.daily_attempts.find_one({
         "username": current_user,
         "date": yesterday
     })
 
-    # Fetch current streak
     user = mongo.db.users.find_one({"username": current_user})
     current = user.get("streak", {}).get("current", 0)
     longest = user.get("streak", {}).get("longest", 0)
 
-    # Increment or reset current streak
     if played_yesterday:
         current += 1
     else:
@@ -251,7 +274,9 @@ def complete_daily_puzzle():
 
     return jsonify({"success": True, "current": current, "longest": longest}), 200
 
-# ====== ENDLESS GAME PUZZLES ======
+## Endless Game Puzzles
+
+# Get a random puzzle from the endless pool
 @app.route('/get-puzzle', methods=['GET'])
 def get_puzzle():
     sentences = list(mongo.db.sentences.find())
@@ -266,7 +291,9 @@ def get_puzzle():
         "letterMap": puzzle.get("letterMap", {})
     })
 
-# ====== CATEGORY PUZZLES ======
+## Category Puzzles
+
+# Get all puzzles for a specific category
 @app.route('/get-category/<category>', methods=['GET'])
 def get_category_puzzles(category):
     try:
@@ -285,8 +312,9 @@ def get_category_puzzles(category):
     except Exception as e:
         return jsonify({"error": "Failed to fetch category puzzles", "details": str(e)}), 500
 
-# === FRIEND SYSTEM ===
+## Friend System - the friend system allows users to send friend requests, accept them, and manage their friends list so the site is more social and less lonely
 
+# Search for users by username (excluding yourself)
 @app.route('/search-users/<query>', methods=['GET'])
 @jwt_required()
 def search_users(query):
@@ -297,6 +325,7 @@ def search_users(query):
     }, {"_id": 0, "username": 1, "picture": 1})
     return jsonify({"success": True, "users": list(users)}), 200
 
+# Send a friend request to another user
 @app.route('/send-friend-request', methods=['POST'])
 @jwt_required()
 def send_friend_request():
@@ -324,6 +353,7 @@ def send_friend_request():
 
     return jsonify({"success": True, "message": "Request sent"}), 200
 
+# Get all incoming friend requests for the current user
 @app.route('/friend-requests', methods=['GET'])
 @jwt_required()
 def get_friend_requests():
@@ -333,6 +363,7 @@ def get_friend_requests():
     formatted = list(mongo.db.users.find({"username": {"$in": requests}}, {"_id": 0, "username": 1, "picture": 1}))
     return jsonify({"success": True, "friend_requests": formatted}), 200
 
+# Get the current user's friends (with basic info)
 @app.route('/get-friends', methods=['GET'])
 @jwt_required()
 def get_friends():
@@ -342,6 +373,7 @@ def get_friends():
     formatted = list(mongo.db.users.find({"username": {"$in": friends}}, {"_id": 0, "username": 1, "picture": 1}))
     return jsonify({"success": True, "friends": formatted}), 200
 
+# Accept a friend request
 @app.route('/accept-friend-request', methods=['POST'])
 @jwt_required()
 def accept_friend():
@@ -360,6 +392,7 @@ def accept_friend():
 
     return jsonify({"success": True, "message": "Friend request accepted"}), 200
 
+# Deny a friend request
 @app.route('/deny-friend-request', methods=['POST'])
 @jwt_required()
 def deny_friend():
@@ -371,6 +404,7 @@ def deny_friend():
 
     return jsonify({"success": True, "message": "Friend request denied"}), 200
 
+# Remove a friend from your friends list #friendshipended
 @app.route('/remove-friend', methods=['POST'])
 @jwt_required()
 def remove_friend():
@@ -388,8 +422,9 @@ from flask_bcrypt import Bcrypt
 
 bcrypt = Bcrypt(app)
 
-# ====== GROUP ROUTES ======
+## Group System - the group system allows users to create and join groups, manage members, and chat within groups
 
+# Create a new group with a password (admin is the creator)
 @app.route('/create-group', methods=['POST'])
 @jwt_required()
 def create_group():
@@ -409,14 +444,14 @@ def create_group():
 
     mongo.db.groups.insert_one({
         "name": group_name,
-        "password": hashed_password,
-        "members": [current_user],
-        "admin": current_user
+        "password": hashed_password, # Store hashed password to ensure security
+        "members": [current_user], # Start with the creator as the only member
+        "admin": current_user # Admin is the creator
     })
 
     return jsonify({"success": True, "message": "Group created"}), 201
 
-
+# Join an existing group by name and password
 @app.route('/join-group', methods=['POST'])
 @jwt_required()
 def join_group():
@@ -442,7 +477,7 @@ def join_group():
 
     return jsonify({"success": True, "message": "Joined group"}), 200
 
-
+# Remove a member from a group (admin only) - think gandalf the grey and the balrog "You shall not pass!"
 @app.route('/remove-member', methods=['POST'])
 @jwt_required()
 def remove_member():
@@ -465,7 +500,7 @@ def remove_member():
 
     return jsonify({"success": True, "message": "Member removed"}), 200
 
-
+# Search for groups by name (case-insensitive), beacause it ensures that users can find groups easily
 @app.route('/search-groups/<query>', methods=['GET'])
 @jwt_required()
 def search_groups(query):
@@ -475,7 +510,7 @@ def search_groups(query):
     )
     return jsonify({"success": True, "groups": list(groups)}), 200
 
-
+# Get all groups the current user is a member of
 @app.route('/my-groups', methods=['GET'])
 @jwt_required()
 def my_groups():
@@ -486,6 +521,7 @@ def my_groups():
     ))
     return jsonify({"success": True, "groups": groups}), 200
 
+# Get all members of a specific group
 @app.route('/group-members/<groupname>', methods=['GET'])
 @jwt_required()
 def get_group_members(groupname):
@@ -495,11 +531,9 @@ def get_group_members(groupname):
 
     return jsonify({"success": True, "members": group.get("members", [])}), 200
 
-# ====== CHAT =====
-from flask import request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+## Chat System - the chat system allows users to communicate with friends and groups in profile page
 
-# GET chat messages
+# Get chat messages for a friend or group chat
 @app.route('/chat/<chat_type>/<target>', methods=['GET'])
 @jwt_required()
 def get_chat(chat_type, target):
@@ -520,7 +554,7 @@ def get_chat(chat_type, target):
 
     return jsonify({"success": True, "messages": messages}), 200
 
-# POST new message
+# Post a new message to a friend or group chat (keeps only last 20 messages)
 @app.route('/chat/<chat_type>/<target>', methods=['POST'])
 @jwt_required()
 def post_chat(chat_type, target):
@@ -566,7 +600,9 @@ def post_chat(chat_type, target):
 
     return jsonify({"success": True, "message": "Message sent"}), 200
 
-# ====== FUN STUFF ======
+## Bogus hints - some random bogus hints to use in the game, some may ask why instead why the hell not
+
+# Get a random bogus hint from the database
 @app.route('/get-bogus-hint', methods=['GET'])
 def get_bogus_hint():
     hints = list(mongo.db.hints.find())
@@ -574,6 +610,7 @@ def get_bogus_hint():
         return jsonify({"text": "No hints found."}), 404
     return jsonify(random.choice(hints))
 
+# Get a random bogus phone line message from the database
 @app.route('/phoneline', methods=['GET'])
 def get_random_phone_line():
     lines = list(mongo.db.phonelines.find())
@@ -581,7 +618,9 @@ def get_random_phone_line():
         return jsonify({"success": False, "message": "No phone lines found."}), 404
     return jsonify({"success": True, "message": random.choice(lines).get("message", "")})
 
-# ====== OTHER USERS ======
+## Public User - the getter for public profiles
+
+# Get a public profile for any user (shows friends and groups too)
 @app.route('/public-profile/<username>', methods=['GET'])
 @jwt_required()
 def get_public_profile(username):
@@ -592,14 +631,12 @@ def get_public_profile(username):
     if not user:
         return jsonify({"success": False, "error": "User not found"}), 404
 
-    # Get detailed friend info
     friend_usernames = user.get("friends", [])
     friends = list(mongo.db.users.find(
         {"username": {"$in": friend_usernames}},
         {"_id": 0, "username": 1, "picture": 1}
     ))
 
-    # Get group names
     groups = list(mongo.db.groups.find(
         {"members": username},
         {"_id": 0, "name": 1}
@@ -610,7 +647,9 @@ def get_public_profile(username):
 
     return jsonify({"success": True, "user": user}), 200
 
-# ====== CHECK STREAK ======
+## Streak Reset Scheduler - ensures users streaks are reset if they miss a daily puzzle
+
+# Every night, reset streaks for users who missed that day's puzzle
 def reset_streaks():
     yesterday = (datetime.utcnow() - timedelta(days=1)).strftime('%Y-%m-%d')
     users = mongo.db.users.find()
@@ -622,11 +661,14 @@ def reset_streaks():
                 "$set": {"streak.current": 0}
             })
 
+# Schedule the streak reset to run daily at 00:05 UTC - this is 1:05 AM CET did not bother to change it
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=reset_streaks, trigger="cron", hour=0, minute=5)  # Run every day at 00:05 UTC
+scheduler.add_job(func=reset_streaks, trigger="cron", hour=0, minute=5)
 scheduler.start()
 
-# ======= Stamps ======
+## Stamps - the categories being marked as completed for the user 
+
+# Mark a category as completed for the user (adds a "stamp")
 @app.route('/complete-category', methods=['POST'])
 @jwt_required()
 def complete_category():
@@ -644,8 +686,7 @@ def complete_category():
 
     return jsonify({"success": True, "message": f"Category '{category}' recorded"}), 200
 
-
-# ====== START ======
+## Start the Flask app - Look for print statements to confirm it's running
 if __name__ == '__main__':
-    print("✅ Starting Flask app on http://127.0.0.1:5000")
+    print("Starting Flask app on http://127.0.0.1:5000")
     app.run(debug=True)

@@ -1,3 +1,9 @@
+/* 
+  App.css - Main styling for Crack the Code game UI.
+  Handles layout, backgrounds, game area, inputs, overlays, and animations.
+  Good luck remembering it, where the different things are!
+*/
+
 html, body {
   margin: 0;
   padding: 0;

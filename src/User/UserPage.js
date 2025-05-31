@@ -12,20 +12,44 @@ import ChatWindow from './ChatWindow';
 import guestImage from '../assets/pictures/general/Daily-sentence-Picture.png';
 import backgroundImg from '../assets/pictures/userpage/user-background.png';
 
+// Main user profile page
 const UserPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [chatTarget, setChatTarget] = useState(null);
-  const [chatType, setChatType] = useState('friend');
+  const [chatTarget, setChatTarget] = useState(null); // Who we're chatting with
+  const [chatType, setChatType] = useState('friend'); // 'friend' or 'group'
   const [searchInput, setSearchInput] = useState('');
+  const [loadError, setLoadError] = useState(false); // <-- NEW
   const navigate = useNavigate();
 
+  // Check authentication status on mount or login state change
   useEffect(() => {
     const token = localStorage.getItem("token");
-    setIsAuthenticated(
-      !!token && token !== "null" && token !== "undefined" && token.trim() !== ""
-    );
+    if (!token || token === "null" || token === "undefined" || token.trim() === "") {
+      setIsAuthenticated(false);
+      setLoadError(false);
+      return;
+    }
+    // Check token validity with backend
+    fetch("http://localhost:5000/user-profile", {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setIsAuthenticated(true);
+          setLoadError(false);
+        } else {
+          setIsAuthenticated(true); // Still treat as logged in, but show error
+          setLoadError(true);
+        }
+      })
+      .catch(() => {
+        setIsAuthenticated(true);
+        setLoadError(true);
+      });
   }, [isLoggedIn]);
 
+  // Show login/signup prompt if not authenticated
   if (!isAuthenticated) {
     return (
       <div style={{
@@ -45,6 +69,7 @@ const UserPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
     );
   }
 
+  // Main profile UI
   return (
     <div
       className="user-page-wrapper"
@@ -60,6 +85,11 @@ const UserPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
       <div className="profile-container">
         <div className="parchment-box two-column-layout">
           <div className="left-column">
+            {loadError && (
+              <div className="error-message" style={{ color: "red", margin: "16px 0" }}>
+                Could not load your profile data. Try logging out and in again.
+              </div>
+            )}
             <UserInfoBox />
             <FriendsBox
               onChat={(user) => {
@@ -77,6 +107,7 @@ const UserPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
           <div className="right-column">
             <StreakBox />
             <StampsBox />
+            {/* Simple user search */}
             <div className="search-other-users">
               <h3>Search for other profiles</h3>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
@@ -100,6 +131,7 @@ const UserPage = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
         </div>
       </div>
 
+      {/* Chat overlay appears when a chat target is set */}
       {chatTarget && (
         <div className="chat-overlay">
           <ChatWindow

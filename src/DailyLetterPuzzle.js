@@ -1,9 +1,13 @@
+// Script for the daily letter puzzle game.
+// Handles fetching the puzzle, user input, lives, hints, and game state.
+
 import React, { useState, useRef, useEffect } from "react";
 import "./App.css";
 import hintCharacter from "./assets/pictures/gamepage/hint-character.png";
 import alreadyPlayedImage from "./assets/pictures/gamepage/already-played.png";
 
 const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
+  // State variables for the puzzle, user progress, and UI
   const [sentence, setSentence] = useState("");
   const [category, setCategory] = useState("Daily Puzzle");
   const [hint, setHint] = useState("Try your best!");
@@ -18,13 +22,16 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
   const [showHint, setShowHint] = useState(false);
   const [hintText, setHintText] = useState("");
 
+  // Refs for input fields and timeouts
   const inputRefs = useRef([]);
   const timeoutRefs = useRef({});
 
+  // Fetch the daily puzzle when the component mounts
   useEffect(() => {
     const fetchDailyPuzzle = async () => {
       const token = localStorage.getItem("token");
 
+      // If no token, don't fetch the puzzle
       if (!token || token.trim() === "" || token === "undefined" || token === "null") return;
 
       try {
@@ -34,6 +41,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
 
         const data = await response.json();
 
+        // If the user already played today, show the black screen
         if (data.error) {
           if (data.error === "Already played today") {
             setTimeout(() => setShowBlackScreen(true), 500);
@@ -47,6 +55,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
         setLetterMapping(data.letterMap || {});
         setRevealedLetters(data.revealedLetters || []);
 
+        // Prepare the input fields, filling in any revealed letters
         const cleanSentence = (data.sentence || "").replace(/[^a-zA-Z]/g, "");
         const initialInput = Array(cleanSentence.length).fill("");
 
@@ -70,6 +79,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
     fetchDailyPuzzle();
   }, []);
 
+  // When the puzzle is solved, notify the backend and update the user's streak
   useEffect(() => {
     const completePuzzle = async () => {
       try {
@@ -83,6 +93,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
         });
         const data = await res.json();
         if (data.success) {
+          // Fetch the updated user profile to get the new streak
           const profileRes = await fetch("http://127.0.0.1:5000/user-profile", {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -101,9 +112,11 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
     }
   }, [isCorrect]);
 
+  // Prepare the correct letters and words for rendering
   const correctLetters = sentence.replace(/[^a-zA-Z]/g, "").split("");
   const words = sentence.split(" ");
 
+  // Handle user input in the letter fields
   const handleChange = (index, value) => {
     if (/^[a-zA-Z]?$/.test(value)) {
       const newInput = [...userInput];
@@ -113,6 +126,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
 
       const correctLetter = correctLetters[index]?.toLowerCase();
 
+      // If the input is correct, move to the next empty field
       if (lowercase === correctLetter) {
         if (timeoutRefs.current[index]) {
           clearTimeout(timeoutRefs.current[index]);
@@ -124,12 +138,14 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
           inputRefs.current[nextIndex].focus();
         }
 
+        // If all letters are correct, mark the puzzle as solved
         if (newInput.join("").toLowerCase() === correctLetters.join("").toLowerCase()) {
           setIsCorrect(true);
         }
         return;
       }
 
+      // If the input is incorrect, decrease lives and clear the input after a short delay
       setLives(prev => {
         const updated = Math.max(prev - 1, 0);
         if (updated === 0) {
@@ -156,6 +172,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
     }
   };
 
+  // Show a bogus hint when the hint character is clicked
   const showBogusHint = () => {
     fetch("http://127.0.0.1:5000/get-bogus-hint")
       .then(res => res.json())
@@ -171,6 +188,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
 
   let letterIndex = 0;
 
+  // If the game is over or already played, show the black screen overlay
   if (showBlackScreen) {
     return (
       <div style={{
@@ -210,6 +228,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
     );
   }
 
+  // Main game UI rendering
   return (
     <div className="game-wrapper">
       <div className="game-area">
@@ -218,6 +237,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
           <p className="hint">{hint}</p>
         </div>
 
+        {/* Render the input fields for each letter in the sentence */}
         <div className="input-container">
           {words.map((word, wordIndex) => (
             <React.Fragment key={wordIndex}>
@@ -251,6 +271,7 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
                         }
                         disabled={lostGame}
                       />
+                      {/* Show the number mapping for each letter */}
                       <span className="number-label">
                         {letterMapping[char.toLowerCase()] || ""}
                       </span>
@@ -258,20 +279,24 @@ const DailyLetterPuzzle = ({ onLoginClick, onSignupClick, isLoggedIn }) => {
                   ) : null;
                 })}
               </div>
+              {/* Add space between words */}
               {wordIndex < words.length - 1 && <div className="space-box">&nbsp;&nbsp;&nbsp;</div>}
             </React.Fragment>
           ))}
         </div>
 
+        {/* Show a success message if the puzzle is solved */}
         {isCorrect && <div className="success-message">Correct!</div>}
       </div>
 
+      {/* Display the user's remaining lives as hearts */}
       <div className="life-bar centered">
         {Array.from({ length: 5 }).map((_, i) => (
           <span key={i} className={`heart ${i < lives ? "full" : "empty"}`}>&#10084;</span>
         ))}
       </div>
 
+      {/* Hint character that gives a bogus hint when clicked */}
       <div className="hint-character" onClick={showBogusHint}>
         <img src={hintCharacter} alt="Hint Character" className="hint-image" />
         <div className="hint-text">Ask me</div>

@@ -1,9 +1,10 @@
+/* Chat Overlay: make sure it in front and visible */
 .chat-overlay {
-  position: fixed;
+  position: fixed; /* this should be fixed to the viewport*/
   top: 50%;
   left: 50%;
   width: 400px;
-  height: 500px;
+  height: 500px; /* size of the chat window   */
   transform: translate(-50%, -50%);
   background-color: white;
   border: 2px solid black;
@@ -13,6 +14,7 @@
   flex-direction: column;
 }
 
+/* Chat Window: Main container for chat content */
 .chat-window {
   display: flex;
   flex-direction: column;
@@ -21,6 +23,7 @@
   background-color: white;
 }
 
+/* Chat Header: Contains the title and close button for that nice user interface */
 .chat-header {
   display: flex;
   justify-content: space-between;
@@ -34,6 +37,7 @@
   font-size: 16px;
 }
 
+/* Close Button*/
 .close-btn {
   background-color: #d9534f;
   color: white;
@@ -44,6 +48,7 @@
   cursor: pointer;
 }
 
+/* Chat Messages: Most important here is the scrolling part */
 .chat-messages {
   flex-grow: 1;
   overflow-y: auto;
@@ -54,10 +59,12 @@
   font-size: 14px;
 }
 
+/* Individual Chat Message   */
 .chat-message {
   margin-bottom: 10px;
 }
 
+/* Chat Input Area: Container for input and send button */
 .chat-input-area {
   display: flex;
   gap: 8px;
@@ -71,6 +78,7 @@
   font-family: 'Courier New', Courier, monospace;
 }
 
+/* Send Button Styling - once again ensuring uniformity */
 .chat-input-area button {
   padding: 8px 12px;
   background-color: #f7e5ba;

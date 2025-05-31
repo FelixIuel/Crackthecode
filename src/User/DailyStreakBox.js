@@ -1,3 +1,6 @@
+// This scripts is for showing the user's daily streak (current + longest)
+// Data is pulled from localStorage first, then refreshed from the backend
+
 import React, { useEffect, useState } from "react";
 import "./DailyStreakBox.css";
 
@@ -6,6 +9,7 @@ const DailyStreakBox = () => {
   const [longestStreak, setLongestStreak] = useState(0);
 
   useEffect(() => {
+    // Pulls cached streak data from localStorage if available, to avoid unnecessary API calls if it hasn't changed
     const cached = localStorage.getItem("userStreak");
     if (cached) {
       const parsed = JSON.parse(cached);
@@ -13,6 +17,7 @@ const DailyStreakBox = () => {
       setLongestStreak(parsed.longest || 0);
     }
 
+    // Fetch fresh data from backend — overrides cache if newer
     const fetchStreak = async () => {
       try {
         const res = await fetch("http://localhost:5000/user-profile", {
@@ -25,6 +30,12 @@ const DailyStreakBox = () => {
         if (data.success && data.user.streak) {
           setCurrentStreak(data.user.streak.current || 0);
           setLongestStreak(data.user.streak.longest || 0);
+
+          // Save updated data to localStorage so we reuse it later
+          localStorage.setItem(
+            "userStreak",
+            JSON.stringify(data.user.streak)
+          );
         }
       } catch (err) {
         console.error("Failed to fetch streak info:", err);
@@ -56,3 +67,6 @@ const DailyStreakBox = () => {
 };
 
 export default DailyStreakBox;
+
+// If time todo: add visual indicators like a clock or calendar icon
+// to make it more engaging

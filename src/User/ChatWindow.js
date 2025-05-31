@@ -1,22 +1,30 @@
-import React, { useEffect, useState, useRef } from 'react'; // React is used throughout the component
+//this script is for the chat window component in Crack the Code
+//this script handles the chat UI and logic for both group and private chats
+
+//imports for script
+import React, { useEffect, useState, useRef } from 'react';
 import './ChatWindow.css';
 
-const ChatWindow = ({ target, type, onClose }) => { // onClose is used in the close button
-  const [messages, setMessages] = useState([]); // setMessages is used to update messages
-  const [newMessage, setNewMessage] = useState(''); // newMessage and setNewMessage are used in the input and handleSend
+// ChatWindow component handles chat UI and logic for group or private chat
+const ChatWindow = ({ target, type, onClose }) => {
+  const [messages, setMessages] = useState([]); // State to hold chat messages
+  const [newMessage, setNewMessage] = useState(''); // State for new message input
   const token = localStorage.getItem('token') || '';
-  const messagesEndRef = useRef(null); // messagesEndRef is used to scroll to the bottom
+  const messagesEndRef = useRef(null); // ensure it scrolls to the bottom when new messages arrive
 
+  // Fetch messages initially and every 5 seconds to simulate real-time updates
   useEffect(() => {
     fetchMessages();
     const interval = setInterval(fetchMessages, 5000);
     return () => clearInterval(interval);
   }, [target, type]);
 
+  // Scroll to bottom whenever messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  // Fetch messages from the backend in app.py
   const fetchMessages = () => {
     fetch(`http://localhost:5000/chat/${type}/${target}`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -31,8 +39,9 @@ const ChatWindow = ({ target, type, onClose }) => { // onClose is used in the cl
       .catch(err => console.error('Error fetching messages:', err));
   };
 
-  const handleSend = () => { // handleSend is used for sending messages
-    if (!newMessage.trim()) return;
+  // Send a new message to the backend in app.py
+  const handleSend = () => {
+    if (!newMessage.trim()) return; // Don't send empty messages
     fetch(`http://localhost:5000/chat/${type}/${target}`, {
       method: 'POST',
       headers: {
@@ -44,19 +53,20 @@ const ChatWindow = ({ target, type, onClose }) => { // onClose is used in the cl
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          setNewMessage('');
-          fetchMessages();
+          setNewMessage(''); // Clear input
+          fetchMessages();   // Refresh messages
         }
       });
   };
 
+  // Scroll chat to the bottom
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
 
-  return (
+  return ( // return of the chat-edi - returns the chat window UI
     <div className="chat-overlay">
       <div className="chat-window">
         <div className="chat-header">

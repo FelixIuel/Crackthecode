@@ -1,3 +1,8 @@
+/* UserPage.css
+ * used in UserPage.js and PublicUserPage.js
+ */
+
+/* Main wrapper for the user page, centers content horizontally */
 .user-page-wrapper {
   display: flex;
   justify-content: center;
@@ -5,22 +10,25 @@
   padding: 40px 0;
 }
 
+/* Container for the profile section, sets max width and horizontal padding */
 .profile-container {
   width: 100%;
   max-width: 1200px;
   padding: 0 20px;
 }
 
+/* Two-column layout for main content, with parchment-like background */
 .parchment-box.two-column-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
   padding: 40px;
-  background-color: rgba(245, 222, 179, 0.5);
+  background-color: rgba(245, 222, 179, 0.5); /* light parchment color */
   border: 1px solid black;
   border-radius: 8px;
 }
 
+/* Styles for left and right columns inside the parchment box */
 .left-column,
 .right-column {
   display: flex;
@@ -28,6 +36,7 @@
   gap: 30px;
 }
 
+/* Search section for finding other users */
 .search-other-users {
   text-align: center;
   margin-top: 10px;
@@ -38,6 +47,7 @@
   margin-bottom: 10px;
 }
 
+/* Input styling for user search */
 .search-other-users input {
   padding: 8px 12px;
   font-family: 'Courier New', Courier, monospace;
@@ -47,6 +57,7 @@
   width: 250px;
 }
 
+/* Wrapper for guest prompt message and image */
 .guest-prompt-wrapper {
   display: flex;
   flex-direction: column;
@@ -56,11 +67,13 @@
   text-align: center;
 }
 
+/* Guest image styling */
 .guest-image {
   max-width: 400px;
   margin-bottom: 20px;
 }
 
+/* Guest message box styling */
 .guest-message {
   font-size: 22px;
   color: white;
@@ -72,7 +85,7 @@
   max-width: 600px;
 }
 
-
+/* Placeholder styling for upload button/input */
 .upload-placeholder {
   color: black;
   font-size: 14px;
@@ -85,6 +98,7 @@
   text-align: center;
 }
 
+/* Edit/Save button styling */
 .edit-save-btn {
   margin-top: 10px;
   padding: 6px 12px;
@@ -95,6 +109,7 @@
   border-radius: 4px;
 }
 
+/* Wrapper for profile picture, with border and background */
 .profile-pic-wrapper {
   width: 100px;
   height: 100px;
@@ -108,6 +123,7 @@
   cursor: pointer;
 }
 
+/* Ensures profile picture fills the wrapper and is cropped nicely */
 .profile-pic-wrapper img {
   width: 100%;
   height: 100%;

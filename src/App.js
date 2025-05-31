@@ -6,10 +6,8 @@ import ScoreboardPage from './ScoreboardPage';
 import DailyPuzzlePage from './DailyPuzzlePage';
 import CategoriesPage from './CategoriesPage';
 import UserPage from './User/UserPage';
-import ChatWindow from './User/ChatWindow';
 import Header from './Header';
 import PublicUserPage from './User/PublicUserPage';
-
 import angryImage from './assets/pictures/general/fullscreen-warning.png';
 
 function App() {
@@ -18,16 +16,24 @@ function App() {
   const [notFullscreen, setNotFullscreen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  const handleLoginClick = () => {
+    setShowSignup(false);
+    setShowLogin(true);
+  };
+
+  const handleSignupClick = () => {
+    setShowLogin(false);
+    setShowSignup(true);
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token && token !== "null" && token !== "undefined" && token.trim() !== "") {
+    if (token && token.trim() && token !== "null" && token !== "undefined") {
       setIsLoggedIn(true);
     }
 
     const checkFullscreen = () => {
-      const minWidth = 1024;
-      const minHeight = 640;
-      const isFullscreen = window.innerWidth >= minWidth && window.innerHeight >= minHeight;
+      const isFullscreen = window.innerWidth >= 1024 && window.innerHeight >= 640;
       setNotFullscreen(!isFullscreen);
     };
 
@@ -40,14 +46,8 @@ function App() {
     <Router>
       <div>
         <Header
-          onLoginClick={() => {
-            setShowSignup(false);
-            setShowLogin(true);
-          }}
-          onSignupClick={() => {
-            setShowLogin(false);
-            setShowSignup(true);
-          }}
+          onLoginClick={handleLoginClick}
+          onSignupClick={handleSignupClick}
           showLoginModal={showLogin}
           setShowLoginModal={setShowLogin}
           showSignupModal={showSignup}
@@ -70,72 +70,23 @@ function App() {
           }}>
             <img src={angryImage} alt="Fullscreen Warning" style={{ maxWidth: '400px', marginBottom: '20px' }} />
             <p style={{
-              fontSize: '22px',
-              fontFamily: "'Courier New', Courier, monospace",
+              fontSize: '20px',
+              fontFamily: 'sans-serif',
               textAlign: 'center'
             }}>
-              Please put me back in full screen
+              For the best experience, please switch to full screen.
             </p>
           </div>
         )}
 
         <Routes>
-          <Route path="/" element={
-            <GamePage
-              onLoginClick={() => {
-                setShowSignup(false);
-                setShowLogin(true);
-              }}
-              onSignupClick={() => {
-                setShowLogin(false);
-                setShowSignup(true);
-              }}
-              isLoggedIn={isLoggedIn}
-            />
-          } />
+          <Route path="/" element={<GamePage onLoginClick={handleLoginClick} onSignupClick={handleSignupClick} isLoggedIn={isLoggedIn} />} />
           <Route path="/explanation" element={<ExplanationPage />} />
-          <Route path="/chat" element={<ChatWindow />} />
-          <Route path="/scoreboard" element={
-            <ScoreboardPage
-              onLoginClick={() => {
-                setShowSignup(false);
-                setShowLogin(true);
-              }}
-              onSignupClick={() => {
-                setShowLogin(false);
-                setShowSignup(true);
-              }}
-              isLoggedIn={isLoggedIn}
-            />
-          } />
-          <Route path="/daily" element={
-            <DailyPuzzlePage
-              onLoginClick={() => {
-                setShowSignup(false);
-                setShowLogin(true);
-              }}
-              onSignupClick={() => {
-                setShowLogin(false);
-                setShowSignup(true);
-              }}
-              isLoggedIn={isLoggedIn}
-            />
-          } />
+          <Route path="/scoreboard" element={<ScoreboardPage onLoginClick={handleLoginClick} onSignupClick={handleSignupClick} isLoggedIn={isLoggedIn} />} />
+          <Route path="/daily" element={<DailyPuzzlePage onLoginClick={handleLoginClick} onSignupClick={handleSignupClick} isLoggedIn={isLoggedIn} />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/user/:username" element={<PublicUserPage />} />
-          <Route path="/profile" element={
-            <UserPage
-              onLoginClick={() => {
-                setShowSignup(false);
-                setShowLogin(true);
-              }}
-              onSignupClick={() => {
-                setShowLogin(false);
-                setShowSignup(true);
-              }}
-              isLoggedIn={isLoggedIn}
-            />
-          } />
+          <Route path="/profile" element={<UserPage onLoginClick={handleLoginClick} onSignupClick={handleSignupClick} isLoggedIn={isLoggedIn} />} />
         </Routes>
       </div>
     </Router>

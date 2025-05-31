@@ -1,3 +1,8 @@
+## Code to add a new puzzle to the MongoDB database for the Crack the Code - Endless Run
+## To use this script, ensure you have MongoDB running and the `pymongo` library installed.
+## start by running the script in a terminal or command prompt.
+## then follow the prompts to enter the puzzle details.
+
 import pymongo
 import random
 import string
@@ -27,7 +32,7 @@ def main():
         letter_map = generate_letter_map()
         revealed_letters = get_revealed_letters(sentence, random.randint(2, 4))
 
-        # Show preview
+        # Show preview for confirmation
         print("\n--- Preview ---")
         print(f"Sentence: {sentence}")
         print(f"Category: {category}")

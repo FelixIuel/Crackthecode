@@ -33,7 +33,6 @@ const ExplanationPage = () => {
       setCallText("The line's dead. Try again later.");
     }
 
-    // Reset message after 4 seconds
     setTimeout(() => {
       setCallText("Call the Detective");
     }, 8000);
